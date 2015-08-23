@@ -175,11 +175,20 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
         }
     })
      .state('menu.tab.chat', {
-        url: '/chat/:userId/:schoolid/:questionID/:userID/:indicatorToggle/:question',
+        url: '/chat/:advisorID/:schoolid/:questionID/:prospectID/:indicatorToggle/:question',
         views: {
             'tab-chat':{
                 templateUrl: 'templates/tab-chat.html',
                 controller: 'ChatCtrl'  
+            }   
+        }
+    })
+     .state('menu.tab.answer', {
+        url: '/answer/:advisorID/:schoolid/:questionID/:prospectID/:indicatorToggle/:question',
+        views: {
+            'tab-answer':{
+                templateUrl: 'templates/tab-answer.html',
+                controller: 'AnswerCtrl'  
             }   
         }
     });

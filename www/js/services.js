@@ -29,7 +29,7 @@ angular.module('mychat.services', ['firebase'])
                 var id = qdata.userid;
                 var ref2 = Users.getRef();
                 
-                var fireRemove = ref.child('schools').child(sid).child('questions').child(qid);
+                var fireRemove = ref2.child(sid).child('questions').child(qid);
 
                 fireRemove.remove(function (err){
                     if(err){
@@ -65,7 +65,7 @@ angular.module('mychat.services', ['firebase'])
         getSelectedRoomName: function () {
             var selectedRoom;
             if (selectedRoomId && selectedRoomId != null) {
-                selectedRoom = Rooms.get(selectedRoomId);
+                selectedRoom = Users.get(selectedRoomId);
                 if (selectedRoom)
                     return selectedRoom.schoolname;
                 else
@@ -76,7 +76,7 @@ angular.module('mychat.services', ['firebase'])
         selectRoom: function (roomId, questionsId) {
             selectedRoomId = roomId;
             if (isNaN(roomId)) {
-                chats = $firebase(ref.child('schools').child(selectedRoomId).child('questions').child(questionsId).child('conversation')).$asArray();
+                chats = $firebase(ref.child('users').child(selectedRoomId).child('questions').child(questionsId).child('conversation')).$asArray();
     
             }
         },
@@ -106,34 +106,7 @@ angular.module('mychat.services', ['firebase'])
         }
     }
 })
-/*factory('Store', function(){
-    if(storeArray && storeArray.length>0){
-        storeArray.length = 0;
-    }
-    var storeArray = [],
-        question=0,
-        conversation=0;
-    return {
-        add: function (data){
-            storeArray[0] = data;
-        },
-        getStore: function (){
-            return storeArray;
-        },
-        addQuestion: function (num){
-            question += num;
-        },
-        addConversation: function (num){
-            conversation += num;
-        },
-        getQuestion: function (){
-            return question;
-        },
-        getConversation: function (){
-            return conversation;
-        }
-    }
-})*/
+
 /**
  * Simple Service which returns Rooms collection as Array from Salesforce & binds to the Scope in Controller
  */
@@ -154,16 +127,20 @@ angular.module('mychat.services', ['firebase'])
             // return $firebase(ref.orderByChild('schoolId').equalTo(sid)).$asArray();
             return $firebase(ref.child(sid).child('questions')).$asArray();
         },
-        addQuestionsToSchool: function(schoolid, userId, question, scope, icon){
+        addQuestionsToSchool: function(schoolid, userId, question, icon, questionID){
             var qdata = {
                 schoolid: schoolid,
                 userid: userId,
                 question: question,
-                icon: icon
+                icon: icon,
+                questionID: questionID
             }
             //console.log(sid, qdata);
             return $firebase(ref.child(schoolid).child('questions')).$asArray().$add(qdata);
            
+        },
+         retrieveSingleQuestion: function (schoolID, questionID) {
+            return $firebase(ref.child(schoolID).child('questions').child(questionID)).$asObject();
         }
     }
 })
@@ -180,14 +157,21 @@ angular.module('mychat.services', ['firebase'])
         all: function () {
             return users;
         },
-        getUserById: function(sid){
+        get: function (roomId) {
+            // Simple index lookup
+            return rooms.$getRecord(roomId);
+        },
+        getUserById: function(studentID){
            // console.log(sid);
              //return $firebase(ref.orderByChild('schoolId').equalTo(sid)).$asArray();
-             return $firebase(ref.child(sid).child('questions')).$asArray();
+             return $firebase(ref.child(studentID).child('questions')).$asArray();
         },
-        addQuestionToUser: function(schoolid, id, question, icon, questionId){
+        addQuestionToUser: function(schoolid, id, question, icon, questionID){
             var user = this.getUserById(id);
-            return user.$add({schoolid: schoolid, question: question, icon: icon, questionId: questionId});
+            return user.$add({schoolid: schoolid, question: question, icon: icon});
+        },
+        getUserConversation: function (sid, questionsID){
+            return $firebase(ref.child(sid).child('questions').child(questionsID).child('conversation')).$asArray();
         },
         getIDS: function (key){
             return JSON.parse($window.localStorage.getItem(key));
@@ -200,7 +184,25 @@ angular.module('mychat.services', ['firebase'])
         },
         removeItem: function (key){
             $window.localStorage.removeItem(key);
-        }
+        },
+        addAnswerToAdvisor: function (from, schoolid, message, questionsID, userID, indicatorToggle){
+            var user = this.getUserConversation(userID, questionsID);
+            var chatMessage = {
+                    from: from,
+                    message: message,
+                    schoolid: schoolid,
+                    createdAt: Firebase.ServerValue.TIMESTAMP
+                };
+            return user.$add(chatMessage);
+       },
+       updateProspectQuestion: function (studentID, questionID, advisorID, advisorKey, question, originalID){
+            var update = ref.child(studentID).child('questions').child(questionID);
+            update.update({advisorID: advisorID, advisorKey: advisorKey});
+
+            question.$remove(questionID).then(function (){
+                //do stuff here
+            });
+       }
     }
 })
 
