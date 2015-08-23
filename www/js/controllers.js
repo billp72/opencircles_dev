@@ -414,7 +414,6 @@ angular.module('mychat.controllers', [])
     if(!$scope.schoolID){
         $scope.schoolID = Users.getIDS('schoolID');
     }
-    var num=0;
     $scope.school = Rooms.getSchoolBySid($scope.schoolID);
     $scope.school.$loaded(function(data){
          $scope.rooms = data;
@@ -483,7 +482,8 @@ angular.module('mychat.controllers', [])
                             advisorID, 
                             advisorKey,
                             question,
-                            questionID
+                            questionID,
+                            schoolID
                         ) 
                          
                     })

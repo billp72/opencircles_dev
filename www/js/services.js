@@ -119,6 +119,9 @@ angular.module('mychat.services', ['firebase'])
         all: function () {
             return rooms;
         },
+        getRef: function (){
+            return ref;
+        },
         get: function (roomId) {
             // Simple index lookup
             return rooms.$getRecord(roomId);
@@ -147,7 +150,7 @@ angular.module('mychat.services', ['firebase'])
 /**
  * simple service to get all the users for a room or in the db
 */
-.factory('Users', function ($firebase, $window) {
+.factory('Users', function ($firebase, $window, Rooms) {
     var qid = [];
     // Might use a resource here that returns a JSON array
     var ref = new Firebase(firebaseUrl+'/users');
@@ -195,13 +198,19 @@ angular.module('mychat.services', ['firebase'])
                 };
             return user.$add(chatMessage);
        },
-       updateProspectQuestion: function (studentID, questionID, advisorID, advisorKey, question, originalID){
+       updateProspectQuestion: function (studentID, questionID, advisorID, advisorKey, question, originalID, schoolID){
             var update = ref.child(studentID).child('questions').child(questionID);
             update.update({advisorID: advisorID, advisorKey: advisorKey});
+            Rooms.getRef().child(schoolID).child('questions').child(originalID).remove(
+                function(err){
+                    if(err){
 
-            question.$remove(questionID).then(function (){
+                    }
+                }
+            )
+           /* question.$remove(questionID).then(function (){
                 //do stuff here
-            });
+            });*/
        }
     }
 })
