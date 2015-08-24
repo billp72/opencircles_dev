@@ -65,7 +65,7 @@ angular.module('mychat.services', ['firebase'])
         getSelectedRoomName: function () {
             var selectedRoom;
             if (selectedRoomID && selectedRoomID != null) {
-                selectedRoom = Users.get(selectedRoomID);
+                selectedRoom = Rooms.get(selectedRoomID);
                 if (selectedRoom)
                     return selectedRoom.schoolname;
                 else
@@ -73,10 +73,10 @@ angular.module('mychat.services', ['firebase'])
             } else
                 return null;
         },
-        selectRoom: function (userID, questionsID) {
-            selectedRoomID = userID;
+        selectRoom: function (schoolID, userID, questionsID) {
+            selectedRoomID = schoolID;
             if (isNaN(userID)) {
-                chats = $firebase(ref.child(selectedRoomID).child('questions').child(questionsID).child('conversation')).$asArray();
+                chats = $firebase(ref.child(userID).child('questions').child(questionsID).child('conversations')).$asArray();
     
             }
         },
@@ -158,10 +158,6 @@ angular.module('mychat.services', ['firebase'])
     return {
         all: function () {
             return users;
-        },
-        get: function (roomID) {
-            // Simple index lookup
-            return rooms.$getRecord(roomID);
         },
         getUserByID: function(studentID){
              return $firebase(ref.child(studentID).child('questions')).$asArray();

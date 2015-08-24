@@ -285,13 +285,13 @@ angular.module('mychat.controllers', [])
         textMessage: ""
     };
     //$scope.students = [];
-    var questionID = $state.params.questionID,
-        schoolID = $state.params.schoolID,
-        urschoolID = $state.params.userID,
+    var advisorKey = $state.params.advisorKey,
+        schoolID   = $state.params.schoolID != 'false' ? $state.params.schoolID : $scope.schoolID,
+        advisorID  = $state.params.advisorID,
         indicatorToggle = $state.params.indicatorToggle;
         $scope.question = $state.params.question;
 
-    Chats.selectRoom(schoolID, questionID);
+    Chats.selectRoom(schoolID, advisorID, advisorKey);
 
     var roomName = Chats.getSelectedRoomName();
 
@@ -331,20 +331,10 @@ angular.module('mychat.controllers', [])
     $scope.sendMessage = function (msg) {
         Chats.send($scope.displayName, $scope.schoolID, msg, questionID, schoolID, userID, indicatorToggle);
         $scope.IM.textMessage = "";
-        /*angular.forEach(Store.getStore()[0], function(value, key){
-                if(value && !value.conversation){
-                    Store.addConversation(1);
-                }
-        });*/
     }
 
     $scope.remove = function (chat, index) {
         Chats.remove(chat);
-        /*angular.forEach(Store.getStore()[0], function(value, key){
-                if(key === 'conversation' && index == 0){
-                    Store.deductConversation(1);
-                }
-        });*/
     }
 
     $scope.removePerm = function () {
@@ -386,15 +376,14 @@ angular.module('mychat.controllers', [])
         $scope.rooms = data;
     })
     
-    $scope.openChatRoom = function (schoolID, questionID, question) {
+    $scope.openChatRoom = function (advisorID, schoolID, question, advisorKey) {
 
         $state.go('menu.tab.chat', {
-            advisorID: $scope.userID,
+            advisorID: advisorID,
             schoolID: schoolID,
-            questionID: questionID,
-            prospectID: userID,
             indicatorToggle:true,
-            question: question
+            question: question,
+            advisorKey: advisorKey    
         });
     }
 })
@@ -414,20 +403,19 @@ angular.module('mychat.controllers', [])
          $scope.rooms = data;
          
      });
-   
-    $scope.openChatRoom = function (schoolID, questionID, userID, question) {
+    $scope.openChatRoom = function (question, advisorKey) {
 
         $state.go('menu.tab.chat', {
             advisorID: $scope.userID,
-            schoolID: schoolID,
-            questionID: questionID,
-            prospectID: userID,
+            schoolID: false,
             indicatorToggle:true,
-            question: question
+            question: question,
+            advisorKey: advisorKey  
         });
     }
-   
 })
+
+
 /*asnswer questions controller - opened from public pool: StudentCtrl
 *
 */
