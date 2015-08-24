@@ -487,14 +487,14 @@ angular.module('mychat.controllers', [])
                                 questionID,
                                 schoolID
                             ) 
-                         
+                            $ionicLoading.hide();
+                            $state.go('menu.tab.studentc');
+                            $scope.user.answer = '';
                         })
-                    })
-                }).then(function(){
-                    $ionicLoading.hide();
-                    $state.go('menu.tab.studentc');
-                    $scope.user.answer = '';
-                }) 
+                    });
+                });
+
+        }else{
             alert('questions must be at least 15 characters long');
         }
     }
