@@ -193,7 +193,7 @@ angular.module('mychat.services', ['firebase'])
        },
        updateProspectQuestion: function (studentID, questionID, advisorID, advisorKey, question, originalID, schoolID){
             var update = ref.child(studentID).child('questions').child(questionID);
-            update.update({advisorID: advisorID, advisorKey: advisorKey});
+            update.update({advisorID: advisorID, advisorKey: advisorKey, conversationStarted: true});
             Rooms.getRef().child(schoolID).child('questions').child(originalID).remove(
                 function(err){
                     if(err){
