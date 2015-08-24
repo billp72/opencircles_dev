@@ -53,3 +53,6 @@ pre{
     font-family: arial sans-seriff;
     font-size: .95em;
 }
+.item-input-wrapper.nobgcolor{
+    background: none !important;
+}

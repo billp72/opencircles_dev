@@ -6,14 +6,7 @@
                     wrap
                 </ion-option-button>
             </ion-item>
-            <ion-item class="item item-input-inset">
-                <label class="item-input-wrapper">
-                    <input type="text" ng-model="IM.textMessage" placeholder="Type in your message...">
-                </label>
-                <button ng-click="sendMessage(IM.textMessage)" class="button button-small button-balanced">
-                    Send
-                </button>
-            </ion-item>
+            
             <ion-item ng-hide="chats" class="textCenter">
                 <i class="icon ion-loading-c"></i> Loading Chats
             </ion-item>
@@ -36,5 +29,13 @@
             </ion-item>
         </ion-list>
 
-    </ion-content>
+    </ion-content> 
+    <ion-footer-bar>
+        <label class="item-input-wrapper nobgcolor">
+            <input type="text" ng-model="IM.textMessage" placeholder="Type in your message...">
+        </label>
+            <button ng-click="sendMessage(IM.textMessage)" class="button button-small button-balanced">
+                Send
+        </button>
+    </ion-footer-bar> 
 </ion-view>
