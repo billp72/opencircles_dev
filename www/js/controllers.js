@@ -14,7 +14,7 @@ angular.module('mychat.controllers', [])
 
         schoolFormDataService.schoolList($scope.data.search).then(
             function(matches) {
-                $scope.user.sid = matches[0];
+                $scope.user.schoolID = matches[0];
                 $scope.data.list = matches;
             }
         )
@@ -142,7 +142,7 @@ angular.module('mychat.controllers', [])
                         /*email: user.email,*/
                         displayName: user.displayname,
                         campus: user.campus,
-                        schoolId: stripDot.strip($scope.schoolInfo.domain),
+                        schoolID: stripDot.strip($scope.schoolInfo.domain),
                         schoolEmail: user.schoolemail
 
                     }
@@ -151,7 +151,7 @@ angular.module('mychat.controllers', [])
                 $scope.modal1.hide();
                 $scope.modal1.remove();
             }).then(function(userData){
-                    var school = Rooms.getSchoolBySid(stripDot.strip($scope.schoolInfo.domain));
+                    var school = Rooms.getSchoolBySchoolID(stripDot.strip($scope.schoolInfo.domain));
                     school.$loaded(function(data){
                         if(data.length <= 0){
                             //var room = ref.child("schools").push();
@@ -159,8 +159,8 @@ angular.module('mychat.controllers', [])
                             room.set({
                                 icon: "ion-university",
                                 schoolname: $scope.schoolInfo.name,
-                                schoolId: stripDot.strip($scope.schoolInfo.domain),
-                                id: room.key()
+                                schoolID: stripDot.strip($scope.schoolInfo.domain),
+                                ID: room.key()
                             },function(err){
                                 if(err) throw err;
 
@@ -196,14 +196,14 @@ angular.module('mychat.controllers', [])
                 ref.child("users").child(authData.uid+'/user').once('value', function (snapshot) {
                     var val = snapshot.val();
     
-                    if(!!val.schoolId){
+                    if(!!val.schoolID){
                         $rootScope.advisor   = true;
                         $rootScope.prospect  = false;
-                        $rootScope.schoolID  = val.schoolId;
+                        $rootScope.schoolID  = val.schoolID;
                         //persist data
                         Users.storeIDS(true, 'advisor');
                         Users.removeItem('prospect');
-                        Users.storeIDS(val.schoolId, 'schoolID');
+                        Users.storeIDS(val.schoolID, 'schoolID');
                     }else{
                         $rootScope.prospect = true;
                         $rootScope.advisor   = false;
@@ -221,9 +221,9 @@ angular.module('mychat.controllers', [])
                     Users.storeIDS(val.displayName, 'displayName');
                 
                     $ionicLoading.hide();
-                    if(!!val.schoolId){
+                    if(!!val.schoolID){
                         $state.go('menu.tab.student', {
-                            schoolid: val.schoolId
+                            schoolID: val.schoolID
                         });
                     }else{
                         $state.go('menu.tab.ask');
@@ -285,33 +285,28 @@ angular.module('mychat.controllers', [])
         textMessage: ""
     };
     //$scope.students = [];
-    var qid = $state.params.questionID,
-        sid = $state.params.schoolid,
-        ursid = $state.params.userID,
+    var questionID = $state.params.questionID,
+        schoolID = $state.params.schoolID,
+        urschoolID = $state.params.userID,
         indicatorToggle = $state.params.indicatorToggle;
         $scope.question = $state.params.question;
 
-    Chats.selectRoom(sid, qid);
+    Chats.selectRoom(schoolID, questionID);
 
     var roomName = Chats.getSelectedRoomName();
 
     $scope.removePerm = function () {
-        var val = Chats.wrapitup(sid, qid, $scope.question);
+        var val = Chats.wrapitup(schoolID, questionID, $scope.question);
        if(typeof val !== "string"){
             if(!!$scope.schoolID){
                 $scope.modal.hide();
                 $state.go('menu.tab.student', {
-                    schoolid: $scope.schoolID
+                    schoolID: $scope.schoolID
                 });
             }else{
                  $scope.modal.hide();
                  $state.go('menu.tab.ask');
             }
-            angular.forEach(Store.getStore()[0], function(value, key){
-                if(key === 'conversation'){
-                    Store.deductAnswers(1);
-                }
-            });
        }
     }
     // Fetching Chat Records only if a Room is Selected
@@ -334,7 +329,7 @@ angular.module('mychat.controllers', [])
     }
 
     $scope.sendMessage = function (msg) {
-        Chats.send($scope.displayName, $scope.schoolID, msg, qid, sid, ursid, indicatorToggle);
+        Chats.send($scope.displayName, $scope.schoolID, msg, questionID, schoolID, userID, indicatorToggle);
         $scope.IM.textMessage = "";
         /*angular.forEach(Store.getStore()[0], function(value, key){
                 if(value && !value.conversation){
@@ -353,12 +348,12 @@ angular.module('mychat.controllers', [])
     }
 
     $scope.removePerm = function () {
-        var val = Chats.wrapitup(sid, qid, $scope.question);
+        var val = Chats.wrapitup(schoolID, quesstionID, $scope.question);
        if(typeof val !== "string"){
             if(!!$scope.schoolID){
                 $scope.modal.hide();
                 $state.go('menu.tab.student', {
-                    schoolid: $scope.schoolID
+                    schoolID: $scope.schoolID
                 });
             }else{
                  $scope.modal.hide();
@@ -380,24 +375,24 @@ angular.module('mychat.controllers', [])
 /*this is the prospects view room
 *
 */
-.controller('RoomsCtrl', function ($scope, Users, $state) {
+.controller('ProspectCtrl', function ($scope, Users, $state) {
     console.log("Rooms Controller initialized");
     if(!$scope.userID){
         $scope.userID = Users.getIDS('userID');
     }
 
-    var q = Users.getUserById($scope.userID);
+    var q = Users.getUserByID($scope.userID);
     q.$loaded(function(data){
         $scope.rooms = data;
     })
     
-    $scope.openChatRoom = function (schoolid, questionId, question) {
+    $scope.openChatRoom = function (schoolID, questionID, question) {
 
         $state.go('menu.tab.chat', {
             advisorID: $scope.userID,
-            schoolid: schoolid,
-            questionID: questionId,
-            prospectID: userid,
+            schoolID: schoolID,
+            questionID: questionID,
+            prospectID: userID,
             indicatorToggle:true,
             question: question
         });
@@ -406,27 +401,27 @@ angular.module('mychat.controllers', [])
 /*the advisor see private questions and open chat
 *
 */
-.controller('StudentConversCtrl', function ($scope, $rootScope, Users, Chats, Rooms, /*Store,*/ $state, $window) {
-    console.log("Student convers Controller initialized");
+.controller('AdvisorConversationsCtrl', function ($scope, $rootScope, Users, Chats, Rooms, /*Store,*/ $state, $window) {
+    console.log("Student conversations Controller initialized");
     if(!$scope.userID){
         $scope.userID = Users.getIDS('userID');
     }
     if(!$scope.schoolID){
         $scope.schoolID = Users.getIDS('schoolID');
     }
-    $scope.school = Rooms.getSchoolBySid($scope.schoolID);
+    $scope.school = Users.getUserByID($scope.userID);
     $scope.school.$loaded(function(data){
          $scope.rooms = data;
          
      });
    
-    $scope.openChatRoom = function (schoolid, questionId, userid, question) {
+    $scope.openChatRoom = function (schoolID, questionID, userID, question) {
 
         $state.go('menu.tab.chat', {
             advisorID: $scope.userID,
-            schoolid: schoolid,
-            questionID: questionId,
-            prospectID: userid,
+            schoolID: schoolID,
+            questionID: questionID,
+            prospectID: userID,
             indicatorToggle:true,
             question: question
         });
@@ -436,8 +431,8 @@ angular.module('mychat.controllers', [])
 /*asnswer questions controller - opened from public pool: StudentCtrl
 *
 */
-.controller('AnswerCtrl', function ($scope, Rooms, Users, $state) {
-    console.log("Rooms Controller initialized");
+.controller('AnswerCtrl', function ($scope, Rooms, Users, $state, $ionicLoading) {
+    console.log("Answer Controller initialized");
     //console.log("Chat Controller initialized");
     if(!$scope.schoolID){
         $scope.schoolID = Users.getIDS('schoolID');
@@ -450,66 +445,79 @@ angular.module('mychat.controllers', [])
     };
     //$scope.students = [];
     var questionID = $state.params.questionID,
-        schoolID = $state.params.schoolid,
+        schoolID = $state.params.schoolID,
         advisorID = $state.params.advisorID,
         indicatorToggle = $state.params.indicatorToggle;
         $scope.question = $state.params.question;
+        $scope.user = {};
     $scope.answer = function (msg) {
-      var advisorKey='';
-      var question = Rooms.retrieveSingleQuestion(schoolID, questionID);
-          question.$loaded(function(data){
-            Users.addQuestionToUser(
-                schoolID,
-                advisorID,
-                $scope.question,
-                'ion-chatbubbles', 
-                questionID
-                )
-                .then(function (questionData){
-                    advisorKey = questionData.key();
-                    Users.addAnswerToAdvisor(
-                         $scope.displayName,
-                         schoolID,
-                         msg.answer,
-                         questionData.key(),
-                         advisorID,
-                         indicatorToggle 
+      var chars = !!msg.answer ? msg.answer.split('') : undefined;
+
+      if(chars && chars.length >= 15){
+            $ionicLoading.show({
+                template: 'Sending...'
+            });
+            var advisorKey='';
+            var question = Rooms.retrieveSingleQuestion(schoolID, questionID);
+                question.$loaded(function(data){
+                    Users.addQuestionToUser(
+                        schoolID,
+                        advisorID,
+                        $scope.question,
+                        'ion-chatbubbles', 
+                        questionID
                     )
-                    .then(function (advisorData){
-                        Users.updateProspectQuestion(
-                            data.userid, 
-                            data.questionID, 
-                            advisorID, 
-                            advisorKey,
-                            question,
-                            questionID,
-                            schoolID
-                        ) 
+                    .then(function (questionData){
+                        advisorKey = questionData.key();
+                        Users.addAnswerToAdvisor(
+                            $scope.displayName,
+                            schoolID,
+                            msg.answer,
+                            questionData.key(),
+                            advisorID,
+                            indicatorToggle 
+                        )
+                        .then(function (advisorData){
+                            Users.updateProspectQuestion(
+                                data.userID, 
+                                data.questionID, 
+                                advisorID, 
+                                advisorKey,
+                                question,
+                                questionID,
+                                schoolID
+                            ) 
                          
+                        })
                     })
-                })
-         }) 
+                }).then(function(){
+                    $ionicLoading.hide();
+                    $state.go('menu.tab.studentc');
+                    $scope.user.answer = '';
+                }) 
+            alert('questions must be at least 15 characters long');
+        }
     }
 })
 /*this controller is for public questions
 *
 */
-.controller('StudentCtrl', function ($scope, $rootScope, Users, Chats, Rooms,/* Store,*/ $state, $window) {
+.controller('AdvisorCtrl', function ($scope, $rootScope, Users, Chats, Rooms, $state, $window) {
     console.log("Student Controller initialized");
     if(!$scope.userID){
         $scope.userID = Users.getIDS('userID');
     }
-    $scope.school = Rooms.getSchoolBySid($state.params.schoolid);
+    $scope.school = Rooms.getSchoolBySchoolID($state.params.schoolID);
     $scope.school.$loaded(function(data){
          $scope.rooms = data;
      });
-    $scope.openAnswerQuestion = function (schoolid, questionId, userid, question) {
+    $scope.openAnswerQuestion = function (schoolID, questionID, userID, question) {
 
         $state.go('menu.tab.answer', {
             advisorID: $scope.userID,
-            schoolid: schoolid,
-            questionID: questionId,
-            prospectID: userid,
+            schoolID: schoolID,
+            questionID: questionID,
+            prospectID: userID,
             indicatorToggle:false,
             question: question
         });
@@ -532,7 +540,7 @@ angular.module('mychat.controllers', [])
 
         SchoolDataService.searchSchools($scope.data.search).then(
             function(matches) {
-                $scope.user.sid = matches[0];
+                $scope.user.schoolID = matches[0];
                 $scope.data.list = matches;
                 
             }
@@ -543,20 +551,20 @@ angular.module('mychat.controllers', [])
     }
     $scope.ask = function (quest){
 
-        var chars = !!quest.question ? quest.question.split('') : undefined
-            if(!!quest.sid){
+        var chars = !!quest.question ? quest.question.split('') : undefined;
+            if(!!quest.schoolID){
                 if(chars && chars.length >= 15){
                     $ionicLoading.show({
                         template: 'Sending...'
                     });
                      Users.addQuestionToUser(
-                            quest.sid.schoolId, 
+                            quest.schoolID.schoolID, 
                             $scope.userID, 
                             quest.question,
                             'ion-chatbubbles'
                         ).then(function(data){
                             Rooms.addQuestionsToSchool(
-                                quest.sid.schoolId, 
+                                quest.schoolID.schoolID, 
                                 $scope.userID,
                                 quest.question,
                                 'ion-chatbubbles', 

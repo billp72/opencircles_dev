@@ -134,7 +134,7 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
         views: {
             'tab-rooms': {
                 templateUrl: 'templates/tab-rooms.html',
-                controller: 'RoomsCtrl'
+                controller: 'ProspectCtrl'
             }
         }
     })
@@ -148,11 +148,11 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
         }
     })
     .state('menu.tab.student', {
-        url: '/studentrooms/:schoolid',
+        url: '/studentrooms/:schoolID',
         views: {
             'tab-student': {
                 templateUrl: 'templates/tab-rooms-student.html',
-                controller: 'StudentCtrl'
+                controller: 'AdvisorCtrl'
             }
         }
     })
@@ -161,7 +161,7 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
         views: {
             'tab-converse': {
                 templateUrl: 'templates/tab-student-convers.html',
-                controller: 'StudentConversCtrl'
+                controller: 'AdvisorConversationsCtrl'
             }
         }
     })
@@ -175,7 +175,7 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
         }
     })
      .state('menu.tab.chat', {
-        url: '/chat/:advisorID/:schoolid/:questionID/:prospectID/:indicatorToggle/:question',
+        url: '/chat/:advisorID/:schoolID/:questionID/:prospectID/:indicatorToggle/:question',
         views: {
             'tab-chat':{
                 templateUrl: 'templates/tab-chat.html',
@@ -184,7 +184,7 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
         }
     })
      .state('menu.tab.answer', {
-        url: '/answer/:advisorID/:schoolid/:questionID/:prospectID/:indicatorToggle/:question',
+        url: '/answer/:advisorID/:schoolID/:questionID/:prospectID/:indicatorToggle/:question',
         views: {
             'tab-answer':{
                 templateUrl: 'templates/tab-answer.html',

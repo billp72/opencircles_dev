@@ -8,8 +8,8 @@ angular.module('mychat.services', ['firebase'])
 
 .factory('Chats', function ($rootScope, $firebase, $state, Rooms, Users) {
 
-    var selectedRoomId;
-    var ref = new Firebase(firebaseUrl);
+    var selectedRoomID;
+    var ref = new Firebase(firebaseUrl+'/users');
     var chats;
 
     return {
@@ -21,23 +21,23 @@ angular.module('mychat.services', ['firebase'])
                 ref.key() === chat.$id; // true item has been removed
             });
         },
-        wrapitup: function(sid, qid, question){
+        wrapitup: function(userID, questionID, question){
             var returnval;
-            var questions = $firebase(ref.child('schools').child(sid).child('questions').child(qid)).$asObject();
+            var questions = $firebase(ref.child(userID).child('questions').child(questionID)).$asObject();
             questions.$loaded(function(qdata){
 
-                var id = qdata.userid;
-                var ref2 = Users.getRef();
+                var ID = qdata.userID;
+                //var ref2 = Users.getRef();
                 
-                var fireRemove = ref2.child(sid).child('questions').child(qid);
+                var fireRemove = ref.child(userID).child('questions').child(questionID);
 
                 fireRemove.remove(function (err){
                     if(err){
                         returnval = 'there was an error deleting' + err;
                     }else{
-                        ref2.child(id).child('questions').
-                             orderByChild('questionId').
-                                 equalTo(qid).on('child_added', function(snapshot){
+                        ref.child(ID).child('questions').
+                             orderByChild('questionID').
+                                 equalTo(questionID).on('child_added', function(snapshot){
                                         snapshot.ref().remove(function(err){
                                                 if(err){
                                                     returnval = 'there was an error deleting' + err;
@@ -54,9 +54,9 @@ angular.module('mychat.services', ['firebase'])
             });
             return returnval;
         },
-        get: function (chatId) {
+        get: function (chatID) {
             for (var i = 0; i < chats.length; i++) {
-                if (chats[i].id === parseInt(chatId)) {
+                if (chats[i].ID === parseInt(chatID)) {
                     return chats[i];
                 }
             }
@@ -64,8 +64,8 @@ angular.module('mychat.services', ['firebase'])
         },
         getSelectedRoomName: function () {
             var selectedRoom;
-            if (selectedRoomId && selectedRoomId != null) {
-                selectedRoom = Users.get(selectedRoomId);
+            if (selectedRoomID && selectedRoomID != null) {
+                selectedRoom = Users.get(selectedRoomID);
                 if (selectedRoom)
                     return selectedRoom.schoolname;
                 else
@@ -73,14 +73,14 @@ angular.module('mychat.services', ['firebase'])
             } else
                 return null;
         },
-        selectRoom: function (roomId, questionsId) {
-            selectedRoomId = roomId;
-            if (isNaN(roomId)) {
-                chats = $firebase(ref.child('users').child(selectedRoomId).child('questions').child(questionsId).child('conversation')).$asArray();
+        selectRoom: function (userID, questionsID) {
+            selectedRoomID = userID;
+            if (isNaN(userID)) {
+                chats = $firebase(ref.child(selectedRoomID).child('questions').child(questionsID).child('conversation')).$asArray();
     
             }
         },
-        send: function (from, schoolid, message, questionsId, selectedRoomId, ursid, indicatorToggle) {
+        send: function (from, schoolID, message, questionsID, selectedRoomID, userID, indicatorToggle) {
             //console.log("sending message from :" + from.displayName + " & message is " + message);
             
             if (from && message) {
@@ -88,14 +88,14 @@ angular.module('mychat.services', ['firebase'])
                 var chatMessage = {
                     from: from,
                     message: message,
-                    schoolid: schoolid,
+                    schoolID: schoolID,
                     createdAt: Firebase.ServerValue.TIMESTAMP
                 };
                  chats.$add(chatMessage).then(function (data) {
-                        if(!!ursid){
-                           ref.child('users').child(ursid).child('questions').
-                              orderByChild('questionId').
-                                 equalTo(questionsId).on('child_added', function(snapshot){
+                        if(!!userID){
+                           ref.child(userID).child('questions').
+                              orderByChild('questionID').
+                                 equalTo(questionsID).on('child_added', function(snapshot){
                                     snapshot.ref().update({'conversationStarted':indicatorToggle});        
                                  });
                         }
@@ -114,7 +114,7 @@ angular.module('mychat.services', ['firebase'])
     // Might use a resource here that returns a JSON array
     var ref = new Firebase(firebaseUrl+'/schools');
     var rooms = $firebase(ref).$asArray();
-    //$firebase(ref.child('schools').child(selectedRoomId).child('chats')).$asArray();
+    //$firebase(ref.child('schools').child(selectedRoomID).child('chats')).$asArray();
     return {
         all: function () {
             return rooms;
@@ -122,24 +122,24 @@ angular.module('mychat.services', ['firebase'])
         getRef: function (){
             return ref;
         },
-        get: function (roomId) {
+        get: function (roomID) {
             // Simple index lookup
-            return rooms.$getRecord(roomId);
+            return rooms.$getRecord(roomID);
         },
-        getSchoolBySid: function(sid){
-            // return $firebase(ref.orderByChild('schoolId').equalTo(sid)).$asArray();
-            return $firebase(ref.child(sid).child('questions')).$asArray();
+        getSchoolBySchoolID: function(schoolID){
+            
+            return $firebase(ref.child(schoolID).child('questions')).$asArray();
         },
-        addQuestionsToSchool: function(schoolid, userId, question, icon, questionID){
+        addQuestionsToSchool: function(schoolID, userID, question, icon, questionID){
             var qdata = {
-                schoolid: schoolid,
-                userid: userId,
+                schoolID: schoolID,
+                userID: userID,
                 question: question,
                 icon: icon,
                 questionID: questionID
             }
-            //console.log(sid, qdata);
-            return $firebase(ref.child(schoolid).child('questions')).$asArray().$add(qdata);
+        
+            return $firebase(ref.child(schoolID).child('questions')).$asArray().$add(qdata);
            
         },
          retrieveSingleQuestion: function (schoolID, questionID) {
@@ -151,7 +151,6 @@ angular.module('mychat.services', ['firebase'])
  * simple service to get all the users for a room or in the db
 */
 .factory('Users', function ($firebase, $window, Rooms) {
-    var qid = [];
     // Might use a resource here that returns a JSON array
     var ref = new Firebase(firebaseUrl+'/users');
     var users = $firebase(ref).$asArray();
@@ -160,21 +159,19 @@ angular.module('mychat.services', ['firebase'])
         all: function () {
             return users;
         },
-        get: function (roomId) {
+        get: function (roomID) {
             // Simple index lookup
-            return rooms.$getRecord(roomId);
+            return rooms.$getRecord(roomID);
         },
-        getUserById: function(studentID){
-           // console.log(sid);
-             //return $firebase(ref.orderByChild('schoolId').equalTo(sid)).$asArray();
+        getUserByID: function(studentID){
              return $firebase(ref.child(studentID).child('questions')).$asArray();
         },
-        addQuestionToUser: function(schoolid, id, question, icon, questionID){
-            var user = this.getUserById(id);
-            return user.$add({schoolid: schoolid, question: question, icon: icon});
+        addQuestionToUser: function(schoolID, ID, question, icon, questionID){
+            var user = this.getUserByID(ID);
+            return user.$add({schoolID: schoolID, question: question, icon: icon});
         },
-        getUserConversation: function (sid, questionsID){
-            return $firebase(ref.child(sid).child('questions').child(questionsID).child('conversation')).$asArray();
+        getUserConversation: function (userID, questionID){
+            return $firebase(ref.child(userID).child('questions').child(questionID).child('conversations')).$asArray();
         },
         getIDS: function (key){
             return JSON.parse($window.localStorage.getItem(key));
@@ -182,18 +179,18 @@ angular.module('mychat.services', ['firebase'])
         getRef: function (){
             return ref;
         },
-        storeIDS: function (id, key){
-            $window.localStorage.setItem(key, JSON.stringify(id));
+        storeIDS: function (ID, key){
+            $window.localStorage.setItem(key, JSON.stringify(ID));
         },
         removeItem: function (key){
             $window.localStorage.removeItem(key);
         },
-        addAnswerToAdvisor: function (from, schoolid, message, questionsID, userID, indicatorToggle){
+        addAnswerToAdvisor: function (from, schoolID, message, questionsID, userID, indicatorToggle){
             var user = this.getUserConversation(userID, questionsID);
             var chatMessage = {
                     from: from,
                     message: message,
-                    schoolid: schoolid,
+                    schoolID: schoolID,
                     createdAt: Firebase.ServerValue.TIMESTAMP
                 };
             return user.$add(chatMessage);
@@ -218,8 +215,8 @@ angular.module('mychat.services', ['firebase'])
 .factory('stripDot', function(){
 
     return {
-        strip: function(id){
-            return id.replace(/\./g,'');
+        strip: function(ID){
+            return ID.replace(/\./g,'');
         }
     }
 })
