@@ -273,7 +273,7 @@ angular.module('mychat.controllers', [])
 /*
 * opens the private chat room
 */
-.controller('ChatCtrl', function ($scope, $rootScope, Chats, Users, /*Store,*/ $state, $window, $ionicLoading, $ionicModal) {
+.controller('ChatCtrl', function ($scope, $rootScope, Chats, Users, $state, $window, $ionicLoading, $ionicModal) {
     //console.log("Chat Controller initialized");
     if(!$scope.schoolID){
         $scope.schoolID = Users.getIDS('schoolID');
@@ -285,11 +285,14 @@ angular.module('mychat.controllers', [])
         textMessage: ""
     };
     //$scope.students = [];
-    var advisorKey = $state.params.advisorKey,
-        schoolID   = $state.params.schoolID != 'false' ? $state.params.schoolID : $scope.schoolID,
-        advisorID  = $state.params.advisorID,
-        indicatorToggle = $state.params.indicatorToggle;
-        $scope.question = $state.params.question;
+    var advisorKey   = $state.params.advisorKey,
+        schoolID     = $state.params.schoolID != 'false' ? $state.params.schoolID : $scope.schoolID,
+        advisorID    = $state.params.advisorID,
+        toggleUserID = !$state.params.prospectUserID ? advisorID : $state.params.prospectUserID,
+        toggleQuestionID = !$state.params.prospectQuestionID ? advisorKey : $state.params.prospectQuestionID,
+        indicatorToggle  = $state.params.indicatorToggle;
+
+        $scope.question  = $state.params.question;
 
     Chats.selectRoom(schoolID, advisorID, advisorKey);
 
@@ -329,16 +332,16 @@ angular.module('mychat.controllers', [])
     }
 
     $scope.sendMessage = function (msg) {
-        Chats.send($scope.displayName, $scope.schoolID, msg, questionID, schoolID, userID, indicatorToggle);
+        Chats.send($scope.displayName, $scope.schoolID, msg, toggleUserID, toggleQuestionID, indicatorToggle);
         $scope.IM.textMessage = "";
     }
-
+//removes a single chat message
     $scope.remove = function (chat, index) {
         Chats.remove(chat);
     }
-
+//removes an entire question/conversation
     $scope.removePerm = function () {
-        var val = Chats.wrapitup(schoolID, quesstionID, $scope.question);
+        var val = Chats.wrapitup(advisorID, advisorKey, $scope.question);
        if(typeof val !== "string"){
             if(!!$scope.schoolID){
                 $scope.modal.hide();
@@ -351,7 +354,7 @@ angular.module('mychat.controllers', [])
             }
        }
     }
-
+//dialog that warns user before question/conversation is deleted
     $scope.removeConversation = function (){
         $ionicModal.fromTemplateUrl('templates/remove-conversation.html', {
             scope: $scope
@@ -383,7 +386,9 @@ angular.module('mychat.controllers', [])
             schoolID: schoolID,
             indicatorToggle:true,
             question: question,
-            advisorKey: advisorKey    
+            advisorKey: advisorKey,
+            prospectUserID: '', //attained at login
+            prospectQuestionID: '' //
         });
     }
 })
@@ -403,14 +408,16 @@ angular.module('mychat.controllers', [])
          $scope.rooms = data;
          
      });
-    $scope.openChatRoom = function (question, advisorKey) {
+    $scope.openChatRoom = function (question, advisorKey, prospectUserID, prospectQuestionID) {
 
         $state.go('menu.tab.chat', {
             advisorID: $scope.userID,
             schoolID: false,
             indicatorToggle:true,
             question: question,
-            advisorKey: advisorKey  
+            advisorKey: advisorKey,
+            prospectUserID: prospectUserID,
+            prospectQuestionID: prospectQuestionID  
         });
     }
 })
@@ -431,8 +438,7 @@ angular.module('mychat.controllers', [])
     $scope.IM = {
         textMessage: ""
     };
-    //$scope.students = [];
-    var questionID = $state.params.questionID,
+    var questionID = $state.params.questionID, //ID of the question in schools
         schoolID = $state.params.schoolID,
         advisorID = $state.params.advisorID,
         indicatorToggle = $state.params.indicatorToggle;
@@ -453,7 +459,8 @@ angular.module('mychat.controllers', [])
                         advisorID,
                         $scope.question,
                         'ion-chatbubbles', 
-                        questionID
+                        data.questionID, //prospects question ID TODO: same as below
+                        data.userID //prospects ID TODO: get this and pass it as a param
                     )
                     .then(function (questionData){
                         advisorKey = questionData.key();
@@ -462,8 +469,7 @@ angular.module('mychat.controllers', [])
                             schoolID,
                             msg.answer,
                             questionData.key(),
-                            advisorID,
-                            indicatorToggle 
+                            advisorID
                         )
                         .then(function (advisorData){
                             Users.updateProspectQuestion(
@@ -549,7 +555,9 @@ angular.module('mychat.controllers', [])
                             quest.schoolID.schoolID, 
                             $scope.userID, 
                             quest.question,
-                            'ion-chatbubbles'
+                            'ion-chatbubbles',
+                            false,
+                            false
                         ).then(function(data){
                             Rooms.addQuestionsToSchool(
                                 quest.schoolID.schoolID, 

@@ -80,7 +80,7 @@ angular.module('mychat.services', ['firebase'])
     
             }
         },
-        send: function (from, schoolID, message, questionsID, selectedRoomID, userID, indicatorToggle) {
+        send: function (from, schoolID, message, toggleUserID, toggleQuestionID, indicatorToggle) {
             //console.log("sending message from :" + from.displayName + " & message is " + message);
             
             if (from && message) {
@@ -92,14 +92,9 @@ angular.module('mychat.services', ['firebase'])
                     createdAt: Firebase.ServerValue.TIMESTAMP
                 };
                  chats.$add(chatMessage).then(function (data) {
-                        if(!!userID){
-                           ref.child(userID).child('questions').
-                              orderByChild('questionID').
-                                 equalTo(questionsID).on('child_added', function(snapshot){
-                                    snapshot.ref().update({'conversationStarted':indicatorToggle});        
-                                 });
-                        }
-                        
+                    ref.child(toggleUserID).child('questions').child(toggleQuestionID)
+                        .update({'conversationStarted':indicatorToggle});
+            
                 });
               
             }
@@ -162,9 +157,13 @@ angular.module('mychat.services', ['firebase'])
         getUserByID: function(studentID){
              return $firebase(ref.child(studentID).child('questions')).$asArray();
         },
-        addQuestionToUser: function(schoolID, ID, question, icon, questionID){
+        addQuestionToUser: function(schoolID, ID, question, icon, questionID, prospectUserID){
             var user = this.getUserByID(ID);
-            return user.$add({schoolID: schoolID, question: question, icon: icon});
+            if(!!questionID){
+                return user.$add({schoolID: schoolID, question: question, prospectQuestionID: questionID, prospectUserID: prospectUserID, icon: icon});
+            }else{
+                return user.$add({schoolID: schoolID, question: question, icon: icon});
+            }
         },
         getUserConversation: function (userID, questionID){
             return $firebase(ref.child(userID).child('questions').child(questionID).child('conversations')).$asArray();
@@ -181,7 +180,7 @@ angular.module('mychat.services', ['firebase'])
         removeItem: function (key){
             $window.localStorage.removeItem(key);
         },
-        addAnswerToAdvisor: function (from, schoolID, message, questionsID, userID, indicatorToggle){
+        addAnswerToAdvisor: function (from, schoolID, message, questionsID, userID){
             var user = this.getUserConversation(userID, questionsID);
             var chatMessage = {
                     from: from,
