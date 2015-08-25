@@ -284,13 +284,23 @@ angular.module('mychat.controllers', [])
     $scope.IM = {
         textMessage: ""
     };
+    var toggleUserID     = '',
+        toggleQuestionID = '';
     //$scope.students = [];
-    var advisorKey   = $state.params.advisorKey,
-        schoolID     = $state.params.schoolID != 'false' ? $state.params.schoolID : $scope.schoolID,
-        advisorID    = $state.params.advisorID,
-        toggleUserID = !$state.params.prospectUserID ? advisorID : $state.params.prospectUserID,
-        toggleQuestionID = !$state.params.prospectQuestionID ? advisorKey : $state.params.prospectQuestionID,
-        indicatorToggle  = $state.params.indicatorToggle;
+    var advisorKey          = $state.params.advisorKey,
+        schoolID            = $state.params.schoolID != 'false' ? $state.params.schoolID : $scope.schoolID,
+        advisorID           = $state.params.advisorID,
+        prospectUserID      = $state.params.prospectUserID,
+        prospectQuestionID  = $state.params.prospectQuestionID,
+        indicatorToggle     = $state.params.indicatorToggle;
+
+        if(!!$scope.schoolID){
+            toggleUserID     = $state.params.prospectUserID,
+            toggleQuestionID = $state.params.prospectQuestionID
+        }else{
+            toggleUserID     = advisorID,
+            toggleQuestionID = advisorKey;
+        }
 
         $scope.question  = $state.params.question;
 
@@ -298,20 +308,6 @@ angular.module('mychat.controllers', [])
 
     var roomName = Chats.getSelectedRoomName();
 
-    $scope.removePerm = function () {
-        var val = Chats.wrapitup(schoolID, questionID, $scope.question);
-       if(typeof val !== "string"){
-            if(!!$scope.schoolID){
-                $scope.modal.hide();
-                $state.go('menu.tab.student', {
-                    schoolID: $scope.schoolID
-                });
-            }else{
-                 $scope.modal.hide();
-                 $state.go('menu.tab.ask');
-            }
-       }
-    }
     // Fetching Chat Records only if a Room is Selected
     if (roomName) {
         $scope.roomName = " - " + roomName;
@@ -339,9 +335,9 @@ angular.module('mychat.controllers', [])
     $scope.remove = function (chat, index) {
         Chats.remove(chat);
     }
-//removes an entire question/conversation
+//remove question/conversation once dialog is confirmed
     $scope.removePerm = function () {
-        var val = Chats.wrapitup(advisorID, advisorKey, $scope.question);
+       var val = Chats.wrapitup(advisorKey, advisorID, prospectQuestionID, prospectUserID);
        if(typeof val !== "string"){
             if(!!$scope.schoolID){
                 $scope.modal.hide();
@@ -379,17 +375,22 @@ angular.module('mychat.controllers', [])
         $scope.rooms = data;
     })
     
-    $scope.openChatRoom = function (advisorID, schoolID, question, advisorKey) {
-
-        $state.go('menu.tab.chat', {
-            advisorID: advisorID,
-            schoolID: schoolID,
-            indicatorToggle:true,
-            question: question,
-            advisorKey: advisorKey,
-            prospectUserID: '', //attained at login
-            prospectQuestionID: '' //
-        });
+    $scope.openChatRoom = function (advisorID, schoolID, question, advisorKey, prospectQuestionID) {
+        
+        if(!!advisorID){
+            $state.go('menu.tab.chat', {
+                advisorID: advisorID,
+                schoolID: schoolID,
+                indicatorToggle:true,
+                question: question,
+                advisorKey: advisorKey,
+                prospectUserID: $scope.userID, //
+                prospectQuestionID: prospectQuestionID //
+            });
+            //TODO: toggle conversationStarted to false
+        }else{
+            alert('question has not been answered yet');
+        }
     }
 })
 /*the advisor see private questions and open chat
@@ -409,7 +410,7 @@ angular.module('mychat.controllers', [])
          
      });
     $scope.openChatRoom = function (question, advisorKey, prospectUserID, prospectQuestionID) {
-
+        //TODO: toggle conversationStarted to false
         $state.go('menu.tab.chat', {
             advisorID: $scope.userID,
             schoolID: false,

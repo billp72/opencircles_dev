@@ -21,37 +21,33 @@ angular.module('mychat.services', ['firebase'])
                 ref.key() === chat.$id; // true item has been removed
             });
         },
-        wrapitup: function(userID, questionID, question){
+        wrapitup: function(advisorKey, advisorID, prospectQuestionID, prospectUserID){
             var returnval;
-            var questions = $firebase(ref.child(userID).child('questions').child(questionID)).$asObject();
-            questions.$loaded(function(qdata){
 
-                var ID = qdata.userID;
-                //var ref2 = Users.getRef();
-                
-                var fireRemove = ref.child(userID).child('questions').child(questionID);
+            console.log('three ',advisorKey, advisorID, prospectQuestionID, prospectUserID);
 
-                fireRemove.remove(function (err){
+            var question = ref.child(advisorID).child('questions').child(advisorKey);
+                question.remove(
+                    function (err){
                     if(err){
                         returnval = 'there was an error deleting' + err;
                     }else{
-                        ref.child(ID).child('questions').
-                             orderByChild('questionID').
-                                 equalTo(questionID).on('child_added', function(snapshot){
-                                        snapshot.ref().remove(function(err){
-                                                if(err){
-                                                    returnval = 'there was an error deleting' + err;
-                                                }else{
-                                                    returnval = true;
-                                                }
+                        questionProspect = ref.child(prospectUserID).child('questions').child(prospectQuestionID);
+                        questionProspect.remove(
+                            function (err){
+                                if(err){
+                                    returnval = 'there was an error deleting' + err;
+                                }else{
+                                    returnval = true;
+                                }
 
-                                        });
+                            }
+                        );
                                         
-                                 });     
-                       
                     }
-                });
-            });
+                }
+            );
+    
             return returnval;
         },
         get: function (chatID) {
