@@ -11,9 +11,11 @@
                 </ion-option-button>
             </ion-item>
             <label class="item item-input">
-                <textarea my-maxlength="100" row="20" name="comment" id="comment-textarea" class="no-resize" ng-model="user.answer" placeHolder="write answer here..."></textarea>
+                <textarea my-maxlength="100" row="100" name="comment" id="comment-textarea" class="no-resize" ng-model="user.answer" placeHolder="write answer here..."></textarea>
             </label>
-            <button ng-disabled="disable" class="button button-full button-positive" ng-click="answer(user)">Submit Answer</button>
         </div>
     </ion-content>
+    <ion-footer-bar>
+        <button ng-disabled="disable" class="button button-full button-positive" ng-click="answer(user)">Submit Answer</button>
+    </ion-footer-bar>
 </ion-view>

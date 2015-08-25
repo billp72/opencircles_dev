@@ -17,11 +17,12 @@
                 </select>
             </label>
             <label class="item item-input">
-                <textarea my-maxlength="100" row="20" name="comment" id="comment-textarea" class="no-resize" ng-model="user.question" placeHolder="write questions here..."></textarea>
+                <textarea my-maxlength="100" row="100" name="comment" id="comment-textarea" class="no-resize" ng-model="user.question" placeHolder="write questions here..."></textarea>
             </label>
-            <button ng-disabled="disable" class="button button-full button-positive" ng-click="ask(user)">Ask Question</button>
-
             <div ng-model="error">{{error}}</div>
         </div>
     </ion-content>
+    <ion-footer-bar>
+        <button ng-disabled="disable" class="button button-full button-positive" ng-click="ask(user)">Ask Question</button>
+    </ion-footer-bar>
 </ion-view>
