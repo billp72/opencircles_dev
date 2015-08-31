@@ -21,33 +21,53 @@ angular.module('mychat.services', ['firebase'])
                 ref.key() === chat.$id; // true item has been removed
             });
         },
-        wrapitup: function(advisorKey, advisorID, prospectQuestionID, prospectUserID){
+        wrapitup: function(advisorKey, advisorID, schoolID, schoolsQuestionID, prospectQuestionID, prospectUserID){
             var returnval;
+            if(!schoolsQuestionID){
+                var question = ref.child(advisorID).child('questions').child(advisorKey);
+                    question.remove(
+                        function (err){
+                            if(err){
+                                returnval = 'there was an error deleting' + err;
+                            }else{
+                                questionProspect = ref.child(prospectUserID).child('questions').child(prospectQuestionID);
+                                questionProspect.remove(
+                                    function (err){
+                                        if(err){
+                                            returnval = 'there was an error deleting' + err;
+                                        }else{
+                                            returnval = true;
+                                        }
 
-            console.log('three ',advisorKey, advisorID, prospectQuestionID, prospectUserID);
-
-            var question = ref.child(advisorID).child('questions').child(advisorKey);
-                question.remove(
-                    function (err){
-                    if(err){
-                        returnval = 'there was an error deleting' + err;
-                    }else{
-                        questionProspect = ref.child(prospectUserID).child('questions').child(prospectQuestionID);
-                        questionProspect.remove(
-                            function (err){
-                                if(err){
-                                    returnval = 'there was an error deleting' + err;
-                                }else{
-                                    returnval = true;
-                                }
-
-                            }
-                        );
+                                    }
+                                    );
                                         
-                    }
-                }
-            );
-    
+                            }
+                        }
+                    );
+            }else{
+                 var question = Rooms.getRef().child(schoolID).child('questions').child(schoolsQuestionID);
+                    question.remove(
+                        function (err){
+                            if(err){
+                                returnval = 'there was an error deleting' + err;
+                            }else{
+                                questionProspect = ref.child(prospectUserID).child('questions').child(prospectQuestionID);
+                                questionProspect.remove(
+                                    function (err){
+                                        if(err){
+                                            returnval = 'there was an error deleting' + err;
+                                        }else{
+                                            returnval = true;
+                                        }
+
+                                    }
+                                    );
+                                        
+                            }
+                        }
+                    );
+            }
             return returnval;
         },
         get: function (chatID) {
@@ -69,14 +89,16 @@ angular.module('mychat.services', ['firebase'])
             } else
                 return null;
         },
-        selectRoom: function (schoolID, userID, questionsID) {
+        selectRoom: function (schoolID, advisorID, advisorKey) {
             selectedRoomID = schoolID;
-            if (isNaN(userID)) {
-                chats = $firebase(ref.child(userID).child('questions').child(questionsID).child('conversations')).$asArray();
-    
+            console.log('advisorKey: ', advisorKey);
+            if(!!advisorKey){
+                chats = $firebase(ref.child(advisorID).child('questions').child(advisorKey).child('conversations')).$asArray();
+            }else{
+                chats = null;
             }
         },
-        send: function (from, schoolID, message, toggleUserID, toggleQuestionID, indicatorToggle) {
+        send: function (from, schoolID, message, toggleUserID, toggleQuestionID) {
             //console.log("sending message from :" + from.displayName + " & message is " + message);
             
             if (from && message) {
@@ -89,7 +111,7 @@ angular.module('mychat.services', ['firebase'])
                 };
                  chats.$add(chatMessage).then(function (data) {
                     ref.child(toggleUserID).child('questions').child(toggleQuestionID)
-                        .update({'conversationStarted':indicatorToggle});
+                        .update({'conversationStarted':true});
             
                 });
               
@@ -121,13 +143,14 @@ angular.module('mychat.services', ['firebase'])
             
             return $firebase(ref.child(schoolID).child('questions')).$asArray();
         },
-        addQuestionsToSchool: function(schoolID, userID, question, icon, questionID){
+        addQuestionsToSchool: function(schoolID, userID, question, icon, questionID, displayName){
             var qdata = {
                 schoolID: schoolID,
                 userID: userID,
                 question: question,
                 icon: icon,
-                questionID: questionID
+                questionID: questionID,
+                displayName: displayName
             }
         
             return $firebase(ref.child(schoolID).child('questions')).$asArray().$add(qdata);
@@ -153,12 +176,25 @@ angular.module('mychat.services', ['firebase'])
         getUserByID: function(studentID){
              return $firebase(ref.child(studentID).child('questions')).$asArray();
         },
-        addQuestionToUser: function(schoolID, ID, question, icon, questionID, prospectUserID){
+        addQuestionToUser: function(schoolID, ID, question, icon, questionID, prospectUserID, displayName){
             var user = this.getUserByID(ID);
             if(!!questionID){
-                return user.$add({schoolID: schoolID, question: question, prospectQuestionID: questionID, prospectUserID: prospectUserID, icon: icon});
+                return user.$add(
+                    {
+                        schoolID: schoolID, 
+                        question: question, 
+                        prospectQuestionID: questionID, 
+                        prospectUserID: prospectUserID,
+                        displayName: displayName, 
+                        icon: icon
+                    });
             }else{
-                return user.$add({schoolID: schoolID, question: question, icon: icon});
+                return user.$add(
+                    {
+                        schoolID: schoolID, 
+                        question: question, 
+                        icon: icon
+                    });
             }
         },
         getUserConversation: function (userID, questionID){
@@ -186,19 +222,21 @@ angular.module('mychat.services', ['firebase'])
                 };
             return user.$add(chatMessage);
        },
-       updateProspectQuestion: function (studentID, questionID, advisorID, advisorKey, question, originalID, schoolID){
+       updateProspectQuestion: function (studentID, questionID, advisorID, advisorKey, originalID, schoolID){
             var update = ref.child(studentID).child('questions').child(questionID);
-            update.update({advisorID: advisorID, advisorKey: advisorKey, conversationStarted: true});
-            Rooms.getRef().child(schoolID).child('questions').child(originalID).remove(
-                function(err){
-                    if(err){
-
+                update.update({advisorID: advisorID, advisorKey: advisorKey, conversationStarted: true});
+                Rooms.getRef().child(schoolID).child('questions').child(originalID).remove(
+                    function(err){
+                        if(err){
+                            alert('an error occured ' + err);
+                        }
                     }
-                }
-            )
-           /* question.$remove(questionID).then(function (){
-                //do stuff here
-            });*/
+                )
+        
+       },
+       toggleQuestionBackAfterClick: function (toggleUserID, toggleQuestionID){
+             ref.child(toggleUserID).child('questions').child(toggleQuestionID)
+                        .update({'conversationStarted':false});
        }
     }
 })
@@ -243,7 +281,7 @@ angular.module('mychat.services', ['firebase'])
 /*
 * autocomplete search
 */
-.factory('SchoolDataService', function($q, $timeout, schoolData) {
+.factory('SchoolDataService', function ($q, $timeout, schoolData) {
         var datas = schoolData.all();
         var schools='';
         datas.$loaded(function(data){
@@ -258,10 +296,8 @@ angular.module('mychat.services', ['firebase'])
                 return 0;
             });
         });
-            var searchSchool = function(searchFilter) {
-         
-            console.log('Searching school for ' + searchFilter);
-
+            var searchSchool = function(searchFilter) {    
+            //console.log('Searching school for ' + searchFilter);
             var deferred = $q.defer();
 
             var matches = schools.filter( function(school) {
