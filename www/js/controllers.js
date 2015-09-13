@@ -1,6 +1,19 @@
 angular.module('mychat.controllers', [])
 
-.controller('LoginCtrl', function ($scope, $ionicModal, $state, $firebaseAuth, Rooms, Users, $ionicLoading, $rootScope, $ionicHistory, SchoolDataService, schoolFormDataService, stripDot) {
+.controller('LoginCtrl', function (
+    $scope, 
+    $ionicModal, 
+    $state, 
+    $firebaseAuth, 
+    Rooms, 
+    Users, 
+    $ionicLoading, 
+    $rootScope, 
+    $ionicHistory, 
+    SchoolDataService, 
+    schoolFormDataService, 
+    stripDot,
+    pushService) {
     //console.log('Login Controller Initialized');
 
     var ref = new Firebase($scope.firebaseUrl);
@@ -74,27 +87,7 @@ angular.module('mychat.controllers', [])
             }
         });
     }
-   
-    $scope.verifyStudentEmail = function(enter){
-        ref.resetPassword({
-            email: enter.schoolemail
-            }, function(error) {
-                if (error) {
-                    switch (error.code) {
-                        case "INVALID_USER":
-                            alert("The specified user account does not exist.");
-                            break;
-                        default:
-                            alert("Error:" + error);
-                        }
-                } else {
-                    alert("An email to your student account has been sent!");
-                    $scope.modal3.hide();
-                    $scope.modal3.remove();
-                    $state.go('login');
-                }
-            });
-    }
+  
     $scope.createUser = function (user) {
         console.log("Create User Function called");
         if (!!user && !!user.email && !!user.password && !!user.displayname) {
@@ -131,7 +124,7 @@ angular.module('mychat.controllers', [])
             !!user.schoolemail &&
             !!user.displayname && 
             !!user.schoolID &&
-             user.schoolID === emailDomain(user.schoolemail)[0] 
+            user.schoolID.domain === emailDomain(user.schoolemail)[0]
              ) 
         {
           
@@ -155,36 +148,56 @@ angular.module('mychat.controllers', [])
                 $scope.modal1.hide();
                 $scope.modal1.remove();
             }).then(function(userData){
-                    var school = Rooms.getSchoolBySchoolID(stripDot.strip(user.schoolID.domain));
-                    school.$loaded(function(data){
+                var school = Rooms.getSchoolBySchoolID(stripDot.strip(user.schoolID.domain));
+                school.$loaded(function(data){
                         //if the school doesn't exist already, add it
-                        if(data.length <= 0){
-                            var room = ref.child("schools").child(stripDot.strip(user.schoolID.domain));
-                            room.set({
-                                icon: "ion-university",
-                                schoolname: user.schoolID.name,
-                                schoolID: stripDot.strip(user.schoolID.domain),
-                                ID: room.key()
-                            },function(err){
-                                if(err) throw err;
+                    if(data.length <= 0){
+                        var room = ref.child("schools").child(stripDot.strip(user.schoolID.domain));
+                        room.set({
+                            icon: "ion-university",
+                            schoolname: user.schoolID.name,
+                            schoolID: stripDot.strip(user.schoolID.domain),
+                            schoolEmail: user.schoolID.schoolContact,
+                            ID: room.key()
+                        },function(err){
+                            if(err) throw err;
 
-                            })
-                        }
-                    });
-            }).then(function(){
-                 $ionicModal.fromTemplateUrl('templates/verifyStudentEmail.html', {
-                    scope: $scope
-                }).then(function (modal) {
-                    $scope.modal3 = modal;
-                    $scope.modal3.show();
+                        })
+                    }
                 });
-              })  
+            }).then(function(){
+                ref.resetPassword({
+                    email: user.schoolemail
+                }, function(error) {
+                    if (error) {
+                        switch (error.code) {
+                            case "INVALID_USER":
+                                alert("The specified user account does not exist.");
+                                break;
+                            default:
+                                alert("Error:" + error);
+                        }
+                    } else {
+                        alert("An email to your student account has been sent!");
+                        $ionicLoading.hide();
+                        $state.go('login');
+                    }
+                });
+            })  
             .catch(function (error) {
-                alert("Error: " + error);
-                $ionicLoading.hide();
+                    alert("Error: " + error);
+                    $ionicLoading.hide();
             });
         } else
             alert("Please fill all details properly");
+    }
+    $scope.openSignIn = function (){
+        $ionicModal.fromTemplateUrl('templates/login2.html', {
+                    scope: $scope
+                }).then(function (modal) {
+                    $scope.modal = modal;
+                    $scope.modal.show();
+                });
     }
     $scope.signIn = function (user) {
         
@@ -212,6 +225,7 @@ angular.module('mychat.controllers', [])
                         $rootScope.prospect = true;
                         $rootScope.advisor  = false;
                         $rootScope.schoolID = '';
+                        $rootScope.email = val.email;
                         //persist data
                         Users.storeIDS(true, 'prospect');
                         Users.removeItem('advisor');
@@ -220,11 +234,16 @@ angular.module('mychat.controllers', [])
                     }
                     $rootScope.userID = authData.uid;
                     $rootScope.displayName = val.displayName;
+                     pushService.register().then(function(token){
+                        console.log("token: ", token);
+                    });
                     //persist data
                     Users.storeIDS(authData.uid, 'userID');
                     Users.storeIDS(val.displayName, 'displayName');
                 
                     $ionicLoading.hide();
+                    $scope.modal.hide();
+                    
                     if(!!val.schoolID){
                         $state.go('menu.tab.student');
                     }else{
@@ -256,7 +275,7 @@ angular.module('mychat.controllers', [])
                 }).then(function (modal) {
                     $scope.modal = modal;
                     $scope.modal.show();
-            });
+                });
         }
 
     $scope.logout = function () {
@@ -275,8 +294,9 @@ angular.module('mychat.controllers', [])
 /*
 * opens the private chat room
 */
-.controller('ChatCtrl', function ($scope, $rootScope, Chats, Users, Rooms, $state, $window, $ionicLoading, $ionicModal, $ionicScrollDelegate, $timeout) {
+.controller('ChatCtrl', function ($scope, $rootScope, Chats, Users, Rooms, $state, $window, $ionicLoading, $ionicModal, $ionicScrollDelegate, $timeout, RequestsService) {
     //console.log("Chat Controller initialized");
+
     if(!$scope.schoolID){
         $scope.schoolID = Users.getIDS('schoolID');
     }
@@ -332,17 +352,12 @@ angular.module('mychat.controllers', [])
     if (roomName) {
         $scope.roomName = " - " + roomName;
         $scope.chats = Chats.all($scope.displayName);
-        $rootScope.$on('message.sent', function (event, value){
-                $scope.from = value;
-        });
         $scope.$watch('chats', function(newValue, oldValue){
             $timeout(function() {
                     keepKeyboardOpen();
                     viewScroll.scrollBottom();
             }, 0);
-            if(!!$scope.from && $scope.from !== $scope.displayName){
-                navigator.notification.vibrate(500);
-            }
+        
         },true);
             
     }
@@ -400,6 +415,17 @@ angular.module('mychat.controllers', [])
                 })
                         
         }
+        RequestsService.pushNote(
+            {
+             'message':'You have a new message Open Circles',
+             'userID': toggleUserID,
+             'method':'GET',
+             'path':'push'
+            }).then(function(response){
+
+              alert('sent!');
+
+            });
 
     }
 //removes a single chat message
@@ -533,7 +559,7 @@ angular.module('mychat.controllers', [])
 /*the prospect can ask a question
 *
 */
-.controller('AskCtrl', function($scope, $state, Users, Rooms, SchoolDataService, stripDot, $ionicLoading){
+.controller('AskCtrl', function($scope, $state, Users, Rooms, SchoolDataService, stripDot, $ionicLoading, $http){
     var icon='';
     if(!$scope.userID){
         $scope.userID = Users.getIDS('userID');
@@ -551,25 +577,30 @@ angular.module('mychat.controllers', [])
             function(matches) {
                 $scope.user.schoolID = matches[0];
                 $scope.data.list = matches;
+
+                if(!!$scope.user.schoolID.schoolContact){
+                    $scope.hasEmail = true;
+                }
                 
             }
         )
     }
     $scope.update = function (data){
-
+        if(!!data && data.schoolContact){
+            //show the checkbox to send email if school has one
+            $scope.hasEmail = true;
+        } 
     }
     $scope.ask = function (quest){
-
-        var chars = !!quest.question ? quest.question.split('') : undefined;
             if(!!quest.schoolID){
-                if(chars && chars.length >= 15){
+                if(quest.question.amount >= 15){
                     $ionicLoading.show({
                         template: 'Sending...'
                     });
                      Users.addQuestionToUser(
                             quest.schoolID.schoolID, 
                             $scope.userID, 
-                            quest.question,
+                            quest.question.value,
                             'ion-chatbubbles',
                             false,
                             false
@@ -577,7 +608,7 @@ angular.module('mychat.controllers', [])
                             Rooms.addQuestionsToSchool(
                                 quest.schoolID.schoolID, 
                                 $scope.userID,
-                                quest.question,
+                                quest.question.value,
                                 'ion-chatbubbles', 
                                 data.key(),
                                 $scope.displayName 
@@ -587,7 +618,28 @@ angular.module('mychat.controllers', [])
                                 $scope.data.search = '';
                                 $scope.user.question = '';
                         });
-                    })
+                    });
+
+                    if(data.isChecked){
+                        var data = {
+                                emailFrom: $scope.email,
+                                schoolContact: data.schoolContact,
+                                question: quest.question.value
+                        };
+                        $http({
+                            method: 'POST',
+                            url: 'http://www.netcreative.org/emailToSchool.php', 
+                            data: data
+                        })
+                        .success(function(data, status, headers, config)
+                        {
+                            console.log(status + ' - ' + data);
+                        })
+                        .error(function(data, status, headers, config)
+                        {
+                            console.log('error');
+                        });
+                    } 
                 }else{
                     alert('questions must be at least 15 characters long');
                 }
