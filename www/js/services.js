@@ -440,8 +440,8 @@ angular.module('mychat.services', ['firebase'])
           // you might want to play a sound to get the user's attention, throw up a dialog, etc.
           if (event.foreground) {
                 console.log('INLINE NOTIFICATION');
-                var my_media = new Media("/android_asset/www/" + event.soundname);
-                my_media.play();
+                //var my_media = new Media("/android_asset/www/" + event.soundname);
+                //my_media.play();
           } else {
             if (event.coldstart) {
                 console.log('COLDSTART NOTIFICATION');
@@ -496,7 +496,7 @@ angular.module('mychat.services', ['firebase'])
             successHandler,
             errorHandler,
              {
-                "senderID":"346007849782",
+                "senderID":"open-circles-1064",
                 "ecb":"window.onNotificationGCM"
              }
         );

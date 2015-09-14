@@ -24,7 +24,7 @@ function init(){
 // 'mychat.controllers' is found in controllers.js
 angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controllers', 'mychat.services', 'mychat.directives'])
 
-.run(function ($ionicPlatform, $rootScope, $location, $state, Auth, $ionicLoading, $ionicModal, $window) {
+.run(function ($ionicPlatform, $rootScope, $location, $state, Auth, $ionicLoading, $ionicModal, $window, pushService) {
 
     $ionicPlatform.ready(function () {
         $rootScope.advisor   =  !!JSON.parse($window.localStorage.getItem('advisor')) ?
@@ -32,7 +32,7 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
         $rootScope.prospect  =  !!JSON.parse($window.localStorage.getItem('prospect')) ?
                 JSON.parse($window.localStorage.getItem('prospect')) : false;
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
-         /*key: AIzaSyDpA0b2smrKyDUSaP0Cmz9hz4cQ19Rxn7U
+         /*key: AIzaSyAbXzuAUk1EICCdfpZhoA6-TleQrPWxJuI
           * Project Number: 346007849782
           */
         // for form inputs)
