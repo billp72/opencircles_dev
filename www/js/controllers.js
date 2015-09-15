@@ -191,7 +191,7 @@ angular.module('mychat.controllers', [])
             });
         }else{
             alert("Please fill all details properly");
-	}
+	    }
     }
     $scope.openSignIn = function (){
         $ionicModal.fromTemplateUrl('templates/login2.html', {
@@ -422,10 +422,6 @@ angular.module('mychat.controllers', [])
              'userID': toggleUserID,
              'method':'GET',
              'path':'push'
-            }).then(function(response){
-
-              alert('sent!');
-
             });
 
     }

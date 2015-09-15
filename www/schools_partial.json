@@ -1,5 +1,5 @@
 [
  {"schoolContact": "", "country": "USA", "domain": "cooper.edu", "name": "Cooper Union"},
- {"schoolContact": "epop.bill@gmail.com", "country": "USA", "domain": "nyu.edu", "name": "New York University"},
- {"schoolContact": "someone@une.edu", "country": "USA", "domain": "une.edu", "name": "University of New England"}
+ {"schoolContact": "", "country": "USA", "domain": "nyu.edu", "name": "New York University"},
+ {"schoolContact": "", "country": "USA", "domain": "une.edu", "name": "University of New England"}
 ]

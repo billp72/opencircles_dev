@@ -32,8 +32,9 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
         $rootScope.prospect  =  !!JSON.parse($window.localStorage.getItem('prospect')) ?
                 JSON.parse($window.localStorage.getItem('prospect')) : false;
         // Hide the accessory bar by default (remove this to show the accessory bar above the keyboard
-         /*key: AIzaSyAbXzuAUk1EICCdfpZhoA6-TleQrPWxJuI
-          * Project Number: 346007849782
+         /*Google keys
+          * key: AIzaSyAbXzuAUk1EICCdfpZhoA6-TleQrPWxJuI
+          * Project Number: open-circles-1064/346007849782
           */
         // for form inputs)
         if (window.cordova && window.cordova.plugins.Keyboard) {

@@ -400,12 +400,14 @@ angular.module('mychat.services', ['firebase'])
     pushNotification = window.plugins.pushNotification,
     successHandler = function (result) {},
     errorHandler = function (err){if(err) throw err;},
-    tokenHandler = function (result) {
-              return fn({
-                'type': 'registration',
-                'id': result,
-                'device': 'ios'
-              });
+    tokenHandler = function (device_token) {
+        RequestsService.pushNote(
+            {'device_token': device_token,
+             'userID': $rootScope.userID,
+             'device_type':'ios',
+             'method':'POST',
+             'path':'register'
+            });
   };
   if(!$rootScope.userID){
         $rootScope.userID = Users.getIDS('userID');
@@ -425,10 +427,6 @@ angular.module('mychat.services', ['firebase'])
              'device_type':'android',
              'method':'POST',
              'path':'register'
-            }).then(function(response){
-
-              alert('registered!');
-
             });
           //send device reg id to server
 
@@ -470,6 +468,7 @@ angular.module('mychat.services', ['firebase'])
   // handle APNS notifications for iOS
   $window.successIosHandler = function (result) {
     console.log('result = ' + result);
+    navigator.notification.alert(result);
   };
   
   $window.onNotificationAPN = function (e) {
@@ -484,7 +483,7 @@ angular.module('mychat.services', ['firebase'])
     }
 
     if (e.badge) {
-      pushNotification.setApplicationIconBadgeNumber("window.successIosHandler", e.badge);
+      pushNotification.setApplicationIconBadgeNumber(successIosHandler, errorHandler, e.badge);
     }
   };
   
@@ -525,7 +524,7 @@ angular.module('mychat.services', ['firebase'])
 
         function pushNote(device_info){
 
-            var deferred = $q.defer();
+            //var deferred = $q.defer();
 
             $ionicLoading.show();
 
@@ -546,7 +545,7 @@ angular.module('mychat.services', ['firebase'])
                 });
 
 
-            return deferred.promise;
+            //return deferred.promise;
 
         };
 
