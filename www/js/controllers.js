@@ -29,6 +29,7 @@ angular.module('mychat.controllers', [])
             function(matches) {
                 $scope.user.schoolID = matches[0];
                 $scope.data.list = matches;
+                $scope.user.schoolemail = '@'+$scope.user.schoolID.domain;
             }
         )
     }
@@ -87,7 +88,6 @@ angular.module('mychat.controllers', [])
             }
         });
     }
-  
     $scope.createUser = function (user) {
         console.log("Create User Function called");
         if (!!user && !!user.email && !!user.password && !!user.displayname) {
@@ -114,8 +114,9 @@ angular.module('mychat.controllers', [])
                 alert("Error: " + error);
                 $ionicLoading.hide();
             });
-        } else
+        } else{
             alert("Please fill all details");
+        }
     }
     $scope.createStudent = function (user) {
         console.log("Create Student Function called");
@@ -124,7 +125,7 @@ angular.module('mychat.controllers', [])
             !!user.schoolemail &&
             !!user.displayname && 
             !!user.schoolID &&
-            user.schoolID.domain === emailDomain(user.schoolemail)[0]
+             user.schoolID.domain === emailDomain(user.schoolemail)[0] 
              ) 
         {
           
@@ -183,13 +184,14 @@ angular.module('mychat.controllers', [])
                         $state.go('login');
                     }
                 });
-            })  
+              })  
             .catch(function (error) {
-                    alert("Error: " + error);
-                    $ionicLoading.hide();
+                alert("Error: " + error);
+                $ionicLoading.hide();
             });
-        } else
+        }else{
             alert("Please fill all details properly");
+	}
     }
     $scope.openSignIn = function (){
         $ionicModal.fromTemplateUrl('templates/login2.html', {
@@ -296,7 +298,6 @@ angular.module('mychat.controllers', [])
 */
 .controller('ChatCtrl', function ($scope, $rootScope, Chats, Users, Rooms, $state, $window, $ionicLoading, $ionicModal, $ionicScrollDelegate, $timeout, RequestsService) {
     //console.log("Chat Controller initialized");
-
     if(!$scope.schoolID){
         $scope.schoolID = Users.getIDS('schoolID');
     }
@@ -577,7 +578,6 @@ angular.module('mychat.controllers', [])
             function(matches) {
                 $scope.user.schoolID = matches[0];
                 $scope.data.list = matches;
-
                 if(!!$scope.user.schoolID.schoolContact){
                     $scope.hasEmail = true;
                 }

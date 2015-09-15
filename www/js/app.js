@@ -36,7 +36,6 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
           * Project Number: 346007849782
           */
         // for form inputs)
-
         if (window.cordova && window.cordova.plugins.Keyboard) {
             cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
         }
