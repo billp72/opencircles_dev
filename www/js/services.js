@@ -78,20 +78,24 @@ angular.module('mychat.services', ['firebase'])
             }
             return null;
         },
-        getSelectedRoomName: function () {
+        getSelectedRoomName: function (cb) {
             var selectedRoom;
             if (selectedRoomID && selectedRoomID != null) {
-                selectedRoom = Rooms.get(selectedRoomID);
-                if (selectedRoom)
-                    return selectedRoom.schoolname;
-                else
-                    return null;
-            } else
+                  return Rooms.get(selectedRoomID, function(room){
+                    if (room)
+                        selectedRoom = room.schoolname;
+                    else
+                        selectedRoom = null;
+
+                    cb(selectedRoom);
+                });
+            } else{
                 return null;
+            }
+
         },
         selectRoom: function (schoolID, advisorID, advisorKey) {
             selectedRoomID = schoolID;
-            console.log('advisorKey: ', advisorKey);
             if(!!advisorKey){
                 chats = $firebase(ref.child(advisorID).child('questions').child(advisorKey).child('conversations')).$asArray();
             }else{
@@ -134,9 +138,12 @@ angular.module('mychat.services', ['firebase'])
         getRef: function (){
             return ref;
         },
-        get: function (roomID) {
-            // Simple index lookup
-            return rooms.$getRecord(roomID);
+        get: function (roomID, fn) {
+            var rm;
+            rooms.$loaded().then(function(room){//get record doesn't return a promise
+                rm = room.$getRecord(roomID);
+                fn(rm);
+            });
         },
         getSchoolBySchoolID: function(schoolID){
             
@@ -448,7 +455,9 @@ angular.module('mychat.services', ['firebase'])
             }
           }
 
-          navigator.notification.alert(event.payload.message);
+          //navigator.notification.alert(event.payload.message);
+          navigator.notification.vibrate(1000);
+
           console.log('MESSAGE -> MSG: ' + event.payload.message);
           //Only works for GCM
           console.log('MESSAGE -> MSGCNT: ' + event.payload.msgcnt);
@@ -474,7 +483,7 @@ angular.module('mychat.services', ['firebase'])
   $window.onNotificationAPN = function (e) {
     if (e.alert) {
       console.log('push-notification: ' + e.alert);
-      navigator.notification.alert(e.alert);
+      //navigator.notification.alert(e.alert);
     }
 
     if (e.sound) {
