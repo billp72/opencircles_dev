@@ -1,29 +1,26 @@
 <ion-view hide-nav-bar="true" class="padding bgcolor">
 <ion-header-bar class="transparent">
-  <button class="button button-clear button-primary" ng-click="openSignIn()">
-      Log In
-    </button>
     <button class="button button-clear button-primary" ng-click="about()">
-      About
+      Open Circles
+    </button>
+    <button class="button button-clear button-primary" ng-click="openSignIn()">
+      Log In
     </button>
 </ion-header-bar>
     <ion-content class="padding transparent">
       <ion-list>
-      <h1 class="hompageTxtTop">OPEN</h1>
+        <img src="img/logo1.png" class="logo">
+        <h4 class="hometxt">Connect with actual college students and get direct answers to your college-related questions</h4>
   </ion-list>
         <div class="list">
             <button ng-click="openModal('student_signup')" class="button button-full button-light button-white">
-                Become A College Advisor
+                Sign up as a College Mentor 
             </button>
-            <div class="list">
-            <img src="img/logo1.png" class="logo">
-            </div>
             <button ng-click="openModal('signup')" class="button button-full button-light button-white">
-                Prospective Student Sign Up
+                Sign up as a College Applicant
             </button>
         </div>
          <ion-list>
-      <h1 class="hompageTxtBottom">CIRCLES</h1>
   </ion-list>
     </ion-content>
 </ion-view>

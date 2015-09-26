@@ -6,7 +6,8 @@ angular.module('mychat.services', ['firebase'])
             return $firebaseAuth(ref);
 }])
 
-.factory('Chats', function ($rootScope, $firebase, $state, Rooms, Users) {
+.factory('Chats', ['$rootScope', '$firebase', '$state', 'Rooms', 'Users', 
+    function ($rootScope, $firebase, $state, Rooms, Users) {
 
     var selectedRoomID;
     var ref = new Firebase(firebaseUrl+'/users');
@@ -121,12 +122,12 @@ angular.module('mychat.services', ['firebase'])
             }
         }
     }
-})
+}])
 
 /**
  * Simple Service which returns Rooms collection as Array from Salesforce & binds to the Scope in Controller
  */
-.factory('Rooms', function ($firebase) {
+.factory('Rooms', ['$firebase', function ($firebase) {
     // Might use a resource here that returns a JSON array
     var ref = new Firebase(firebaseUrl+'/schools');
     var rooms = $firebase(ref).$asArray();
@@ -140,7 +141,7 @@ angular.module('mychat.services', ['firebase'])
         },
         get: function (roomID, fn) {
             var rm;
-            rooms.$loaded().then(function(room){//get record doesn't return a promise
+            rooms.$loaded(function(room){//get record doesn't return a promise
                 rm = room.$getRecord(roomID);
                 fn(rm);
             });
@@ -166,11 +167,11 @@ angular.module('mychat.services', ['firebase'])
             return $firebase(ref.child(schoolID).child('questions').child(questionID)).$asObject();
         }
     }
-})
+}])
 /**
  * simple service to get all the users for a room or in the db
 */
-.factory('Users', function ($firebase, $window, Rooms) {
+.factory('Users', ['$firebase', '$window', 'Rooms', function ($firebase, $window, Rooms) {
     // Might use a resource here that returns a JSON array
     var ref = new Firebase(firebaseUrl+'/users');
     var users = $firebase(ref).$asArray();
@@ -245,18 +246,18 @@ angular.module('mychat.services', ['firebase'])
                         .update({'conversationStarted':false});
        }
     }
-})
+}])
 
-.factory('stripDot', function(){
+.factory('stripDot', [function(){
 
     return {
         strip: function(ID){
             return ID.replace(/\./g,'');
         }
     }
-})
+}])
 /*change password*/
-.factory('ChangePassword', function(){
+.factory('ChangePassword', [function(){
     var ref = new Firebase(firebaseUrl);
     return {
 
@@ -283,11 +284,11 @@ angular.module('mychat.services', ['firebase'])
                 });
             }
         }
-})
+}])
 /*
 * autocomplete search
 */
-.factory('SchoolDataService', function ($q, $timeout, schoolData) {
+.factory('SchoolDataService', ['$q', '$timeout', 'schoolData', function ($q, $timeout, schoolData) {
         var datas = schoolData.all();
         var schools='';
         datas.$loaded(function(data){
@@ -325,11 +326,11 @@ angular.module('mychat.services', ['firebase'])
         searchSchools : searchSchool
 
     }
-})
+}])
 /*
 *get school data
 */
-.factory('schoolData', function($firebase){
+.factory('schoolData', ['$firebase', function ($firebase){
 
     var ref = new Firebase(firebaseUrl+'/schools');
     var schools = $firebase(ref).$asArray();
@@ -340,11 +341,13 @@ angular.module('mychat.services', ['firebase'])
         }
     }
      
-})
+}])
 /*
 * this is to populate the form with schools when the user is creating an account
 */
-.factory('schoolFormDataService', function($q, $timeout, schoolFormData){
+.factory('schoolFormDataService', ['$q', '$timeout', 'schoolFormData', 
+    function ($q, $timeout, schoolFormData){
+
     var datas = schoolFormData.all();
         var schools='';
     
@@ -387,22 +390,23 @@ angular.module('mychat.services', ['firebase'])
         schoolList : schoolList
 
     }
-})
+}])
 
-.factory('schoolFormData', function($http){
-    var data = $http.get('schools_partial.json');
+.factory('schoolFormData', ['$http', function ($http){
+    var data = $http.get('https://www.netcreative.org/schools/schools.php');
 
     return {
         all: function(){
             return data;
         }
     }
-})
+}])
 /*push factory
 * key: AIzaSyDpA0b2smrKyDUSaP0Cmz9hz4cQ19Rxn7U
 * Project Number: 346007849782
 */
-.factory('pushService', function ($rootScope, $q, $window, RequestsService, Users) {
+.factory('pushService',  ['$rootScope', '$q', '$window', 'RequestsService', 'Users',
+        function ($rootScope, $q, $window, RequestsService, Users) {
   var 
     pushNotification = window.plugins.pushNotification,
     successHandler = function (result) {},
@@ -504,7 +508,7 @@ angular.module('mychat.services', ['firebase'])
             successHandler,
             errorHandler,
              {
-                "senderID":"open-circles-1064",
+                "senderID":"346007849782",
                 "ecb":"window.onNotificationGCM"
              }
         );
@@ -523,7 +527,7 @@ angular.module('mychat.services', ['firebase'])
       return q.promise;
     }
   }
-})
+}])
 
 .service('RequestsService', ['$http', '$q', '$ionicLoading',  RequestsService]);
 
@@ -533,11 +537,8 @@ angular.module('mychat.services', ['firebase'])
 
         function pushNote(device_info){
 
-            //var deferred = $q.defer();
-
-            $ionicLoading.show();
-
-            $http({
+           if(device_info.method === 'POST'){
+                $http({
                     method: device_info.method,
                     url: base_url+'/'+device_info.path, 
                     data: device_info
@@ -545,17 +546,27 @@ angular.module('mychat.services', ['firebase'])
                 .success(function(data, status, headers, config)
                 {
                     console.log(status + ' - ' + data);
-                    $ionicLoading.hide();
                 })
                 .error(function(data, status, headers, config)
                 {
                     console.log(status);
-                    $ionicLoading.hide();
                 });
 
-
-            //return deferred.promise;
-
+            }else{
+                 $http({
+                    method: device_info.method,
+                    url: base_url+'/'+device_info.path, 
+                    params: {'message': device_info.message, 'userID': device_info.userID}
+                })
+                .success(function(data, status, headers, config)
+                {
+                    console.log(status + ' - ' + data);
+                })
+                .error(function(data, status, headers, config)
+                {
+                    console.log(status);
+                });
+            }
         };
 
 

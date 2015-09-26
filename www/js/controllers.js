@@ -1,6 +1,20 @@
 angular.module('mychat.controllers', [])
 
-.controller('LoginCtrl', function (
+.controller('LoginCtrl', [
+    '$scope', 
+    '$ionicModal', 
+    '$state', 
+    '$firebaseAuth', 
+    'Rooms', 
+    'Users', 
+    '$ionicLoading', 
+    '$rootScope', 
+    '$ionicHistory', 
+    'SchoolDataService', 
+    'schoolFormDataService', 
+    'stripDot',
+    'pushService',
+    function (
     $scope, 
     $ionicModal, 
     $state, 
@@ -236,9 +250,9 @@ angular.module('mychat.controllers', [])
                     }
                     $rootScope.userID = authData.uid;
                     $rootScope.displayName = val.displayName;
-                     pushService.register().then(function(token){
+                     /*pushService.register().then(function(token){
                         console.log("token: ", token);
-                    });
+                    });*/
                     //persist data
                     Users.storeIDS(authData.uid, 'userID');
                     Users.storeIDS(val.displayName, 'displayName');
@@ -262,13 +276,17 @@ angular.module('mychat.controllers', [])
             alert("Please enter email and password both");
     }
     
-})
-.controller('TabCtrl', function ($scope, $rootScope){
+}])
+/*
+* end Loginctrl
+*/
+.controller('TabCtrl', ['$scope', '$rootScope', function ($scope, $rootScope){
     $scope.tabSelected = function (select){
         $rootScope.tabs = select;
     }
-})
-.controller('SettingsCtrl', function ($scope, Users, ChangePassword, $state, $ionicLoading, $ionicModal, Auth) {
+}])
+.controller('SettingsCtrl', ['$scope', 'Users', 'ChangePassword', '$state', '$ionicLoading', '$ionicModal', 'Auth',
+    function ($scope, Users, ChangePassword, $state, $ionicLoading, $ionicModal, Auth) {
     console.log('settings initialized');
 
     $scope.deleteAccount = function(){
@@ -292,11 +310,12 @@ angular.module('mychat.controllers', [])
     $scope.runChangePassword = function(user){
             ChangePassword.change(user);
     }
-})
+}])
 /*
 * opens the private chat room
 */
-.controller('ChatCtrl', function ($scope, $rootScope, Chats, Users, Rooms, $state, $window, $ionicLoading, $ionicModal, $ionicScrollDelegate, $timeout, RequestsService) {
+.controller('ChatCtrl', ['$scope', '$rootScope', 'Chats', 'Users', 'Rooms', '$state', '$window', '$ionicLoading', '$ionicModal', '$ionicScrollDelegate', '$timeout', 'RequestsService',
+    function ($scope, $rootScope, Chats, Users, Rooms, $state, $window, $ionicLoading, $ionicModal, $ionicScrollDelegate, $timeout, RequestsService) {
     //console.log("Chat Controller initialized");
     if(!$scope.schoolID){
         $scope.schoolID = Users.getIDS('schoolID');
@@ -348,7 +367,6 @@ angular.module('mychat.controllers', [])
 
 
     Chats.getSelectedRoomName(function(roomName){
-
     // Fetching Chat Records only if a Room is Selected
         if (roomName) {
             $scope.roomName = " - " + roomName;
@@ -417,13 +435,13 @@ angular.module('mychat.controllers', [])
                 })
                         
         }
-        RequestsService.pushNote(
+        /*RequestsService.pushNote(
             {
-             'message':'You have a new Open Circles message from: ' + $scope.displayName,
+             'message':'Message from: ' + $scope.displayName,
              'userID': toggleUserID,
              'method':'GET',
              'path':'push'
-            });
+            });*/
 
     }
 //removes a single chat message
@@ -458,11 +476,11 @@ angular.module('mychat.controllers', [])
         });
     }
 
-})
+}])
 /*this is the prospects view room
 *
 */
-.controller('ProspectCtrl', function ($scope, Users, $state) {
+.controller('ProspectCtrl', ['$scope', 'Users', '$state', function ($scope, Users, $state) {
     console.log("Rooms Controller initialized");
     if(!$scope.userID){
         $scope.userID = Users.getIDS('userID');
@@ -491,11 +509,12 @@ angular.module('mychat.controllers', [])
             alert('question has not been answered yet');
         }
     }
-})
+}])
 /*the advisor see private questions and open chat
 *
 */
-.controller('AdvisorConversationsCtrl', function ($scope, $rootScope, Users, Chats, Rooms, /*Store,*/ $state, $window) {
+.controller('AdvisorConversationsCtrl', ['$scope', '$rootScope', 'Users', 'Chats', 'Rooms', '$state', '$window',
+    function ($scope, $rootScope, Users, Chats, Rooms, $state, $window) {
     console.log("Student conversations Controller initialized");
     if(!$scope.userID){
         $scope.userID = Users.getIDS('userID');
@@ -522,12 +541,13 @@ angular.module('mychat.controllers', [])
         });
         Users.toggleQuestionBackAfterClick($scope.userID, advisorKey);
     }
-})
+}])
 
 /*this controller is for public questions
 *
 */
-.controller('AdvisorCtrl', function ($scope, $rootScope, Users, Chats, Rooms, $state, $window) {
+.controller('AdvisorCtrl', ['$scope', '$rootScope', 'Users', 'Chats', 'Rooms', '$state', '$window', 
+    function ($scope, $rootScope, Users, Chats, Rooms, $state, $window) {
     console.log("Student Controller initialized");
     if(!$scope.userID){
         $scope.userID = Users.getIDS('userID');
@@ -553,11 +573,12 @@ angular.module('mychat.controllers', [])
         });
     }
  
-})
+}])
 /*the prospect can ask a question
 *
 */
-.controller('AskCtrl', function($scope, $state, Users, Rooms, SchoolDataService, stripDot, $ionicLoading, $http){
+.controller('AskCtrl', ['$scope', '$state', 'Users', 'Rooms', 'SchoolDataService', 'stripDot', '$ionicLoading', '$http', 
+    function($scope, $state, Users, Rooms, SchoolDataService, stripDot, $ionicLoading, $http){
     var icon='';
     if(!$scope.userID){
         $scope.userID = Users.getIDS('userID');
@@ -617,10 +638,10 @@ angular.module('mychat.controllers', [])
                         });
                     });
 
-                    if(data.isChecked){
+                    if(quest.isChecked){
                         var data = {
                                 emailFrom: $scope.email,
-                                schoolContact: data.schoolContact,
+                                schoolContact: quest.schoolContact,
                                 question: quest.question.value
                         };
                         $http({
@@ -644,4 +665,4 @@ angular.module('mychat.controllers', [])
                 alert('please select a school');
             }
     }
-});
+}]);
