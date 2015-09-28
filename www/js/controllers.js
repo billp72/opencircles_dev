@@ -105,9 +105,10 @@ angular.module('mychat.controllers', [])
     $scope.createUser = function (user) {
         console.log("Create User Function called");
         if (!!user && !!user.email && !!user.password && !!user.displayname) {
-            $ionicLoading.show({
-                template: 'Signing Up...'
-            });
+            if(user.password.split('').length>5){
+                $ionicLoading.show({
+                    template: 'Signing Up...'
+                });
 
             auth.$createUser({
                 email: user.email,
@@ -118,7 +119,8 @@ angular.module('mychat.controllers', [])
                    user:{
                         email: user.email,
                         displayName: user.displayname,
-                        grade: user.grade
+                        grade: user.grade,
+                        organization: user.organization
                     }
                 });
                 $ionicLoading.hide();
@@ -128,6 +130,9 @@ angular.module('mychat.controllers', [])
                 alert("Error: " + error);
                 $ionicLoading.hide();
             });
+            }else{
+                alert("Your password must be at least 6 characters");
+            }
         } else{
             alert("Please fill all details");
         }
@@ -242,6 +247,7 @@ angular.module('mychat.controllers', [])
                         $rootScope.advisor  = false;
                         $rootScope.schoolID = '';
                         $rootScope.email = val.email;
+                        $rootScope.organization = val.organization;
                         //persist data
                         Users.storeIDS(true, 'prospect');
                         Users.removeItem('advisor');
@@ -250,9 +256,9 @@ angular.module('mychat.controllers', [])
                     }
                     $rootScope.userID = authData.uid;
                     $rootScope.displayName = val.displayName;
-                     /*pushService.register().then(function(token){
+                     pushService.register().then(function(token){
                         console.log("token: ", token);
-                    });*/
+                    });
                     //persist data
                     Users.storeIDS(authData.uid, 'userID');
                     Users.storeIDS(val.displayName, 'displayName');
@@ -435,13 +441,13 @@ angular.module('mychat.controllers', [])
                 })
                         
         }
-        /*RequestsService.pushNote(
+        RequestsService.pushNote(
             {
              'message':'Message from: ' + $scope.displayName,
              'userID': toggleUserID,
              'method':'GET',
              'path':'push'
-            });*/
+            });
 
     }
 //removes a single chat message
@@ -577,8 +583,8 @@ angular.module('mychat.controllers', [])
 /*the prospect can ask a question
 *
 */
-.controller('AskCtrl', ['$scope', '$state', 'Users', 'Rooms', 'SchoolDataService', 'stripDot', '$ionicLoading', '$http', 
-    function($scope, $state, Users, Rooms, SchoolDataService, stripDot, $ionicLoading, $http){
+.controller('AskCtrl', ['$scope', '$state', 'Users', 'Rooms', 'SchoolDataService', 'stripDot', '$ionicLoading', '$http', 'Questions',
+    function($scope, $state, Users, Rooms, SchoolDataService, stripDot, $ionicLoading, $http, Questions){
     var icon='';
     if(!$scope.userID){
         $scope.userID = Users.getIDS('userID');
@@ -657,7 +663,8 @@ angular.module('mychat.controllers', [])
                         {
                             console.log('error');
                         });
-                    } 
+                    }
+                    Questions.save({question: quest.question.value, organization: $scope.organization}); 
                 }else{
                     alert('questions must be at least 15 characters long');
                 }

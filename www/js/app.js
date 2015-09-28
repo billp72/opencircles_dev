@@ -7,18 +7,7 @@ function onDeviceReady() {
 }
 //console.log("binding device ready");
 // Registering onDeviceReady callback with deviceready event
-function init(){
-    window.isphone = false;
-    if(document.URL.indexOf("http://") === -1 
-        && document.URL.indexOf("https://") === -1) {
-        window.isphone = true;
-    }
-    if(window.isphone){
-        document.addEventListener("deviceready", onDeviceReady, false);
-    }else{
-        onDeviceReady();
-    }
-}
+document.addEventListener("deviceready", onDeviceReady, false);
 
 // 'mychat.services' is found in services.js
 // 'mychat.controllers' is found in controllers.js
