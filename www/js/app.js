@@ -9,6 +9,19 @@ function onDeviceReady() {
 // Registering onDeviceReady callback with deviceready event
 document.addEventListener("deviceready", onDeviceReady, false);
 
+/*function init(){
+    window.isphone = false;
+    if(document.URL.indexOf("http://") === -1 
+        && document.URL.indexOf("https://") === -1) {
+        window.isphone = true;
+    }
+    if(window.isphone){
+        document.addEventListener("deviceready", onDeviceReady, false);
+    }else{
+        onDeviceReady();
+    }
+}*/
+
 // 'mychat.services' is found in services.js
 // 'mychat.controllers' is found in controllers.js
 angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controllers', 'mychat.services', 'mychat.directives'])
@@ -16,6 +29,14 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
 .run(function ($ionicPlatform, $rootScope, $location, $state, Auth, $ionicLoading, $ionicModal, $window, pushService) {
 
     $ionicPlatform.ready(function () {
+         //localstorage check
+        $window.localStorage.setItem('test', 'test');
+        if($window.localStorage.getItem('test') !== null){
+            $window.localStorage.removeItem('test');
+            }else{
+                alert('you must activate local storage to use this app');
+                $location.path("/login");
+            }
         $rootScope.advisor   =  !!JSON.parse($window.localStorage.getItem('advisor')) ?
                 JSON.parse($window.localStorage.getItem('advisor')) : false;
         $rootScope.prospect  =  !!JSON.parse($window.localStorage.getItem('prospect')) ?
@@ -41,7 +62,7 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
 
         Auth.$onAuth(function (authData) {
             if (authData) {
-                console.log("Logged in as:", authData.uid);
+               
             } else {
                 console.log("Logged out");
                 $ionicLoading.hide();
@@ -159,7 +180,7 @@ angular.module('mychat', ['ionic', 'firebase', 'angularMoment', 'mychat.controll
         }
     })
      .state('menu.tab.chat', {
-        url: '/chat/:advisorID/:schoolID/:advisorKey/:prospectUserID/:prospectQuestionID/:schoolsQuestionID/:question/:displayName',
+        url: '/chat/:advisorID/:schoolID/:advisorKey/:prospectUserID/:prospectQuestionID/:schoolsQuestionID/:question/:displayName/:email',
         views: {
             'tab-chat':{
                 templateUrl: 'templates/tab-chat.html',

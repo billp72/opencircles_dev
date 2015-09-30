@@ -14,6 +14,7 @@ angular.module('mychat.controllers', [])
     'schoolFormDataService', 
     'stripDot',
     'pushService',
+    '$window',
     function (
     $scope, 
     $ionicModal, 
@@ -27,15 +28,31 @@ angular.module('mychat.controllers', [])
     SchoolDataService, 
     schoolFormDataService, 
     stripDot,
-    pushService) {
+    pushService,
+    $window) {
     //console.log('Login Controller Initialized');
 
     var ref = new Firebase($scope.firebaseUrl);
     var auth = $firebaseAuth(ref);
 
+    $scope.$on('$ionicView.enter', function(){
+            $ionicHistory.clearCache();
+            $ionicHistory.clearHistory();
+    });
+
     $scope.user = {};
     $scope.data = { "list" : '', "search" : ''};
-   
+    
+    function moveCaretToStart(el) {
+        if (typeof el.selectionStart == "number") {
+            el.selectionStart = el.selectionEnd = 0;
+        } else if (typeof el.createTextRange != "undefined") {
+            el.focus();
+            var range = el.createTextRange();
+            range.collapse(true);
+            range.select();
+        }
+    }
 
     $scope.search = function() {
 
@@ -44,15 +61,22 @@ angular.module('mychat.controllers', [])
                 $scope.user.schoolID = matches[0];
                 $scope.data.list = matches;
                 $scope.user.schoolemail = '@'+$scope.user.schoolID.domain;
+                var textBox = document.getElementById('schoolemail');
+                    moveCaretToStart(textBox);
+                    $window.setTimeout(function() {
+                        moveCaretToStart(textBox);
+                    }, 1);
             }
         )
     }
-    $scope.$on('$ionicView.enter', function(){
-            $ionicHistory.clearCache();
-            $ionicHistory.clearHistory();
-    });
+    
     $scope.update = function(school){
         $scope.user.schoolemail = '@'+school.domain;
+        var textBox = document.getElementById('schoolemail');
+            moveCaretToStart(textBox);
+            $window.setTimeout(function() {
+                    moveCaretToStart(textBox);
+            }, 1);    
     }
     function emailDomain(email){
         var tolower = email.toLowerCase();
@@ -104,7 +128,7 @@ angular.module('mychat.controllers', [])
     }
     $scope.createUser = function (user) {
         console.log("Create User Function called");
-        if (!!user && !!user.email && !!user.password && !!user.displayname && !!user.organization) {
+        if (!!user && !!user.email && !!user.password && !!user.displayname) {
             if(user.password.split('').length>5){
                 $ionicLoading.show({
                     template: 'Signing Up...'
@@ -161,7 +185,9 @@ angular.module('mychat.controllers', [])
                         displayName: user.displayname,
                         grade: user.grade,
                         schoolID: stripDot.strip(user.schoolID.domain),
-                        schoolEmail: user.schoolemail
+                        schoolEmail: user.schoolemail,
+                        group: user.group,
+                        major: user.major
                     }
                 });
                 $ionicLoading.hide();
@@ -175,7 +201,7 @@ angular.module('mychat.controllers', [])
                         var room = ref.child("schools").child(stripDot.strip(user.schoolID.domain));
                         room.set({
                             icon: "ion-university",
-                            schoolname: user.schoolID.name,
+                            schoolname: user.schoolID.value,
                             schoolID: stripDot.strip(user.schoolID.domain),
                             schoolEmail: user.schoolID.schoolContact,
                             ID: room.key()
@@ -221,18 +247,24 @@ angular.module('mychat.controllers', [])
                 });
     }
     $scope.signIn = function (user) {
+        $window.localStorage.setItem('test', 'test');
+        if($window.localStorage.getItem('test') === null){
+             alert('you must activate local storage to use this app');
+            $scope.modal.hide();           
+        }else{
+            $window.localStorage.removeItem('test');
         
-        if (user && user.email && user.pwdForLogin) {
-            $ionicLoading.show({
-                template: 'Signing In...'
-            });
-            auth.$authWithPassword({
-                email: user.email,
-                password: user.pwdForLogin
-            }).then(function (authData) {
-                console.log("Logged in as:" + authData.uid);
-                ref.child("users").child(authData.uid+'/user').once('value', function (snapshot) {
-                    var val = snapshot.val();
+            if (user && user.email && user.pwdForLogin) {
+                $ionicLoading.show({
+                    template: 'Signing In...'
+                });
+                auth.$authWithPassword({
+                    email: user.email,
+                    password: user.pwdForLogin
+                }).then(function (authData) {
+                    console.log("Logged in as:" + authData.uid);
+                    ref.child("users").child(authData.uid+'/user').once('value', function (snapshot) {
+                        var val = snapshot.val();
     
                     if(!!val.schoolID){
                         $rootScope.advisor    = true;
@@ -263,7 +295,6 @@ angular.module('mychat.controllers', [])
                     Users.storeIDS(authData.uid, 'userID');
                     Users.storeIDS(val.displayName, 'displayName');
                 
-                    $ionicLoading.hide();
                     $scope.modal.hide();
                     
                     if(!!val.schoolID){
@@ -271,17 +302,18 @@ angular.module('mychat.controllers', [])
                     }else{
                         $state.go('menu.tab.ask');
                     }
-                    
+                    $ionicLoading.hide();  
                 });
                 
             }).catch(function (error) {
                 alert("Authentication failed:" + error.message);
                 $ionicLoading.hide();
             });
-        } else
+        } else{
             alert("Please enter email and password both");
-    }
-    
+        }
+      }
+    }   
 }])
 /*
 * end Loginctrl
@@ -323,6 +355,19 @@ angular.module('mychat.controllers', [])
 .controller('ChatCtrl', ['$scope', '$rootScope', 'Chats', 'Users', 'Rooms', '$state', '$window', '$ionicLoading', '$ionicModal', '$ionicScrollDelegate', '$timeout', 'RequestsService',
     function ($scope, $rootScope, Chats, Users, Rooms, $state, $window, $ionicLoading, $ionicModal, $ionicScrollDelegate, $timeout, RequestsService) {
     //console.log("Chat Controller initialized");
+    var 
+        advisorKey          = $state.params.advisorKey,
+        schoolID            = $state.params.schoolID,
+        advisorID           = $state.params.advisorID,
+        prospectUserID      = $state.params.prospectUserID,
+        prospectQuestionID  = $state.params.prospectQuestionID,
+        schoolsQuestionID   = $state.params.schoolsQuestionID,
+        displayName         = $state.params.displayName,
+        email               = $state.params.email,
+        toggleUserID        = '',
+        toggleQuestionID    = '',
+        firstMessage        = false;
+
     if(!$scope.schoolID){
         $scope.schoolID = Users.getIDS('schoolID');
     }
@@ -336,7 +381,8 @@ angular.module('mychat.controllers', [])
     $timeout(function(){
         footerBar = document.body.querySelector('#userMessagesView .bar-footer');
         txtInput = angular.element(footerBar.querySelector('input'));
-    },0)
+    },0);
+    var viewScroll = $ionicScrollDelegate.$getByHandle('userMessageScroll');
     function keepKeyboardOpen() {
       //console.log('keepKeyboardOpen');
       txtInput.one('blur', function() {
@@ -344,17 +390,6 @@ angular.module('mychat.controllers', [])
         txtInput[0].focus();
       });
     }
-    var viewScroll = $ionicScrollDelegate.$getByHandle('userMessageScroll');
-    var advisorKey          = $state.params.advisorKey,
-        schoolID            = $state.params.schoolID,
-        advisorID           = $state.params.advisorID,
-        prospectUserID      = $state.params.prospectUserID,
-        prospectQuestionID  = $state.params.prospectQuestionID,
-        schoolsQuestionID   = $state.params.schoolsQuestionID,
-        displayName         = $state.params.displayName,
-        toggleUserID        = '',
-        toggleQuestionID    = '',
-        firstMessage        = false;
 
         if(!!$scope.schoolID){
             toggleUserID     = prospectUserID;
@@ -402,7 +437,8 @@ angular.module('mychat.controllers', [])
                     'ion-chatbubbles', 
                     prospectQuestionID, 
                     prospectUserID,
-                    displayName 
+                    displayName,
+                    email 
                 )
                 .then(function (results){
                    $scope.addAnswerAdvisor = results;
@@ -457,7 +493,8 @@ angular.module('mychat.controllers', [])
 //remove question/conversation once dialog is confirmed
     $scope.removePerm = function () {
        var advkey = !!advisorKey ? advisorKey : $scope.advisorKey;
-       var val = Chats.wrapitup(advkey, advisorID, schoolID, schoolsQuestionID, prospectQuestionID, prospectUserID);
+       var mail = firstMessage ? null : email;
+       var val = Chats.wrapitup(advkey, advisorID, schoolID, schoolsQuestionID, prospectQuestionID, prospectUserID, $scope.question, mail, $scope.userID);
        if(typeof val !== "string"){
             if(!!$scope.schoolID){
                 $scope.modal.hide();
@@ -508,7 +545,8 @@ angular.module('mychat.controllers', [])
                 prospectQuestionID: prospectQuestionID, //
                 schoolsQuestionID: '',
                 question: question,
-                displayName: '' 
+                displayName: '',
+                email: $scope.email 
             });
             Users.toggleQuestionBackAfterClick($scope.userID, prospectQuestionID);
         }else{
@@ -533,7 +571,7 @@ angular.module('mychat.controllers', [])
          $scope.rooms = data;
          
      });
-    $scope.openChatRoom = function (question, advisorKey, prospectUserID, prospectQuestionID) {
+    $scope.openChatRoom = function (question, advisorKey, prospectUserID, prospectQuestionID, email) {
         //TODO: toggle conversationStarted to false
         $state.go('menu.tab.chat', {
             advisorID: $scope.userID,
@@ -543,7 +581,8 @@ angular.module('mychat.controllers', [])
             prospectQuestionID: prospectQuestionID,
             schoolsQuestionID: '',
             question: question,
-            displayName: ''   
+            displayName: '',
+            email: email   
         });
         Users.toggleQuestionBackAfterClick($scope.userID, advisorKey);
     }
@@ -564,8 +603,10 @@ angular.module('mychat.controllers', [])
     $scope.school = Rooms.getSchoolBySchoolID($scope.schoolID);
     $scope.school.$loaded(function(data){
          $scope.rooms = data;
+
+         //TODO: watch createdAt. Send push when aged
      });
-    $scope.openChatRoom = function (question, prospectUserID, prospectQuestionID, schoolsQuestionID, displayName) {
+    $scope.openChatRoom = function (question, prospectUserID, prospectQuestionID, schoolsQuestionID, displayName, email) {
 
         $state.go('menu.tab.chat', {
             advisorID: $scope.userID,
@@ -575,7 +616,8 @@ angular.module('mychat.controllers', [])
             prospectQuestionID: prospectQuestionID,
             schoolsQuestionID: schoolsQuestionID,
             question: question,
-            displayName: displayName 
+            displayName: displayName,
+            email: email 
         });
     }
  
@@ -635,7 +677,8 @@ angular.module('mychat.controllers', [])
                                 quest.question.value,
                                 'ion-chatbubbles', 
                                 data.key(),
-                                $scope.displayName 
+                                $scope.displayName,
+                                $scope.email 
                             ).then(function(){
                                 $ionicLoading.hide();
                                 $state.go('menu.tab.newest');
@@ -652,7 +695,7 @@ angular.module('mychat.controllers', [])
                         };
                         $http({
                             method: 'POST',
-                            url: 'http://www.netcreative.org/emailToSchool.php', 
+                            url: 'http://www.netcreative.org/schools/emailToSchool.php', 
                             data: data
                         })
                         .success(function(data, status, headers, config)
